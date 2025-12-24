@@ -43,18 +43,24 @@ jobs:
           commit-message: "feat(components): Add ${{ github.event.issue.title }} via Gemini"
           title: "⚡ Gemini PR: ${{ github.event.issue.title }}"
           body: |
-            Esta PR ha sido generada automáticamente por Google Gemini 1.5 Flash.
+            Esta PR ha sido generada automáticamente por Google Gemini.
             
-            **Solicitud Original:** #${{ github.event.issue.number }}
+            # 🔗 Vinculación
+            Closes #${{ github.event.issue.number }}
             
-            ### 🤖 Estado:
-            - **Búsqueda Web:** Realizada
-            - **Generación:** Gemini 1.5 Flash
-            - **Formato:** Dart Format aplicado
+            ---
             
-            **⚠️ Acción Requerida:**
-            Revisa los valores técnicos antes de hacer Merge.
+            ### 🤖 Estado del Agente:
+            - **Búsqueda Web:** ✅ Realizada
+            - **Generación:** ✅ Gemini 1.5 Flash
+            - **Formato:** ✅ Dart Format aplicado
+            
+            ### ⚠️ Acción Requerida:
+            1. Revisa el archivo `component_local_data_source.dart`.
+            2. Si todo es correcto, aprueba y haz Merge.
           branch: "gemini-component-${{ github.event.issue.number }}"
           base: main
           labels: "ai-generated, components"
           delete-branch: true
+          # 👇 CAMBIO AQUÍ: Tu usuario fijo
+          reviewers: rubenOrtz
