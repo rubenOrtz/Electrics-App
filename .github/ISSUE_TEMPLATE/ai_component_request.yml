@@ -1,0 +1,20 @@
+name: 🤖 Añadir Componentes a la librería con IA
+description: Pide a Gemini que busque y añada automáticamente un nuevo componente a la librería.
+title: "[COMPONENT REQUEST] Nombre del Componente"
+labels: ["ai-generated", "enhancement"]
+assignees:
+  - rubenOrtz
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## 🤖 Instrucciones para el Agente
+        Rellena los detalles abajo. Cuando envíes esto, GitHub Actions disparará a Gemini para escribir el código. Te recomiendo subir un PDF o poner el nombre COMPLETO.
+  
+  - type: input
+    id: component_name
+    attributes:
+      label: Nombre del Componente
+      description: P.Ej: Schneider a9cr1240 diferencial autorearmable 2P 40A 30mA
+    validations:
+      required: true
