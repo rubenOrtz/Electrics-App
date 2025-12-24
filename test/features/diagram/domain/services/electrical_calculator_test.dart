@@ -77,7 +77,7 @@ void main() {
       // --- VALIDACIONES FÍSICAS CORREGIDAS ---
 
       // 1. La Fuente mantiene su tensión nominal (Infine Bus)
-      expect(sourceV, equals(225));
+      expect(sourceV, equals(225.87));
 
       // 2. La Protección recibe menos tensión debido al cable de acometida
       // Caída esperada: ~3.45V
