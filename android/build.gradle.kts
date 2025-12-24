@@ -15,6 +15,14 @@ subprojects {
     afterEvaluate {
         val android = extensions.findByName("android")
         if (android != null) {
+            
+            try {
+                val setCompileSdkVersion = android.javaClass.getMethod("setCompileSdkVersion", Int::class.javaPrimitiveType)
+                setCompileSdkVersion.invoke(android, 36)
+                println("✅ Forced compileSdkVersion to 34 for subproject: $name")
+            } catch (e: Exception) {
+                println("⚠️ Error forcing compileSdkVersion for $name: $e")
+            }
             try {
                 val getNamespace = android.javaClass.getMethod("getNamespace")
                 if (getNamespace.invoke(android) == null) {
@@ -27,7 +35,7 @@ subprojects {
                     println("Set namespace for $name to $packageName")
                 }
             } catch (e: Exception) {
-               // ignore
+                // ignore
             }
         }
     }
