@@ -28,7 +28,7 @@ jobs:
 
       - name: ⚡ Run Gemini Generator
         env:
-          GEMINI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
         run: python scripts/ai_component_generator.py
