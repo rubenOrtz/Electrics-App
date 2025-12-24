@@ -15,6 +15,6 @@ body:
     id: component_name
     attributes:
       label: Nombre del Componente
-      description: P.Ej: Schneider a9cr1240 diferencial autorearmable 2P 40A 30mA
+      description: Por Ejemplo, Schneider a9cr1240 diferencial autorearmable 2P 40A 30mA
     validations:
       required: true
