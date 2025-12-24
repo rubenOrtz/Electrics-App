@@ -1,0 +1,4 @@
+google-generativeai
+duckduckgo-search
+requests
+beautifulsoup4
