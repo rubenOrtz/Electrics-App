@@ -428,6 +428,8 @@ class ComponentLocalDataSource implements domain.ComponentRepository {
         installationMethod: 'E',
         price: 4.20,
       ),
+
+      // [AI_INSERT_POINT]
     ];
   }
 }
