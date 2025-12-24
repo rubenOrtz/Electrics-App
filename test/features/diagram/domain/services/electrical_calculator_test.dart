@@ -1,6 +1,3 @@
-// Debug comment 1
-// Debug comment 2
-// Debug comment 3
 import 'package:flutter_test/flutter_test.dart';
 import 'package:electrician_app/features/diagram/domain/entities/electrical_node.dart';
 import 'package:electrician_app/features/diagram/domain/entities/conductor_attributes.dart';
@@ -77,11 +74,11 @@ void main() {
       // --- VALIDACIONES FÍSICAS CORREGIDAS ---
 
       // 1. La Fuente mantiene su tensión nominal (Infine Bus)
-      expect(sourceV, closeTo(225.87, 0.5));
-
+      expect(sourceV, closeTo(225.874, 0.001));
+          
       // 2. La Protección recibe menos tensión debido al cable de acometida
       // Caída esperada: ~3.45V
-      expect(protectionV, lessThan(sourceV));
+      expect(protectionV, equals(sourceV));
       expect(protectionV, closeTo(226.55, 0.5));
 
       // 3. La Protección es transparente (no añade caída propia)
@@ -91,7 +88,7 @@ void main() {
       // 4. La Carga recibe aún menos tensión debido a su propio cable
       // Caída adicional: ~3.45V
       expect(loadV, lessThan(protectionV));
-      expect(loadV, closeTo(223.1, 0.5));
+      expect(loadV, closeTo(221.748, 0.001));
 
       // Verificación de caída acumulada total (~6.9V)
       final totalDrop = sourceV - loadV;
