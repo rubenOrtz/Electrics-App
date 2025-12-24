@@ -35,7 +35,7 @@ subprojects {
                     println("Set namespace for $name to $packageName")
                 }
             } catch (e: Exception) {
-               // ignore
+                // ignore
             }
         }
     }
