@@ -1,17 +1,16 @@
 import os
 import sys
-import google.generativeai as genai
+from google import genai # <--- NUEVA LIBRERÍA
 from duckduckgo_search import DDGS
 
 # --- CONFIGURACIÓN ---
-API_KEY = os.getenv("AI_API_KEY") # Nombre actualizado
+API_KEY = os.getenv("AI_API_KEY")
 ISSUE_BODY = os.getenv("ISSUE_BODY", "")
 ISSUE_TITLE = os.getenv("ISSUE_TITLE", "")
 SOURCE_FILE_PATH = "lib/features/components/data/datasources/component_local_data_source.dart"
 INSERTION_MARKER = "// [AI_INSERT_POINT]"
 
 def search_web(query):
-    """Busca especificaciones técnicas."""
     print(f"🔍 Buscando en web: {query}...")
     try:
         results = DDGS().text(query, max_results=3)
@@ -35,56 +34,47 @@ def read_source_file():
         sys.exit(1)
 
 def generate_dart_code(source_code, search_context, clean_title):
-    """Usa Gemini 1.5 Flash para generar el código."""
+    # --- CAMBIO IMPORTANTE: NUEVO CLIENTE ---
+    client = genai.Client(api_key=API_KEY)
     
-    # Configuración de Gemini
-    genai.configure(api_key=API_KEY)
-    
-    # Configuración del modelo (Flash es rápido y barato/gratis)
-    model = genai.GenerativeModel('gemini-1.5-flash')
-
-    # Contexto del código existente
-    context_snippet = source_code[-4000:] # Gemini tiene gran ventana, podemos darle más contexto
+    context_snippet = source_code[-4000:]
 
     prompt = f"""
-    Actúa como un Senior Flutter Developer experto en Clean Architecture.
+    Actúa como un Senior Flutter Developer. Genera UNICAMENTE el código Dart para instanciar `ComponentTemplate`.
     
-    OBJETIVO:
-    Generar UNICAMENTE el código Dart para instanciar un objeto `ComponentTemplate` basado en la solicitud.
-    
-    ESTRUCTURA DEL CÓDIGO ACTUAL (Úsalo como ejemplo exacto):
+    ESTRUCTURA ACTUAL:
     ```dart
     {context_snippet}
     ```
     
-    DATOS TÉCNICOS ENCONTRADOS EN WEB:
+    DATOS TÉCNICOS:
     {search_context}
     
-    SOLICITUD DEL USUARIO (ISSUE):
-    Título: {clean_title}
-    Detalles: {ISSUE_BODY}
+    SOLICITUD: {clean_title}
+    {ISSUE_BODY}
     
-    REGLAS OBLIGATORIAS:
-    1. Devuelve SOLO el código del constructor (ej: `const ComponentTemplate.protection(...)`).
-    2. NO incluyas markdown (```dart), ni explicaciones, ni saludos. Solo código.
-    3. Usa los Enums exactos que ves en el código (`ProtectionDeviceType`, `CableMaterial`).
-    4. Inventa un ID único lógico (ej: 'marca-modelo-specs').
-    5. Si faltan datos numéricos (precio), pon 0.0 o un estimado realista.
+    REGLAS:
+    1. Solo código del constructor. Sin markdown.
+    2. Usa Enums exactos del contexto.
+    3. Inventa ID único.
     """
 
-    print("⚡ Preguntando a Gemini 1.5 Flash...")
+    print("⚡ Preguntando a Gemini (Nuevo SDK)...")
     try:
-        response = model.generate_content(prompt)
-        code = response.text
+        # --- CAMBIO IMPORTANTE: NUEVA LLAMADA ---
+        response = client.models.generate_content(
+            model='gemini-2.0-flash', # Usamos el modelo más nuevo y rápido
+            contents=prompt
+        )
         
-        # Limpieza agresiva por si Gemini es muy hablador
+        code = response.text
         code = code.replace("```dart", "").replace("```", "").strip()
         if code.endswith(";"):
             code = code[:-1]
             
         return code
     except Exception as e:
-        print(f"❌ Error llamando a Gemini: {e}")
+        print(f"❌ Error Gemini: {e}")
         sys.exit(1)
 
 def inject_code(new_code):
@@ -92,7 +82,7 @@ def inject_code(new_code):
         content = f.read()
     
     if INSERTION_MARKER not in content:
-        print(f"❌ Error: Falta el marcador '{INSERTION_MARKER}' en el archivo Dart.")
+        print(f"❌ Error: Falta el marcador '{INSERTION_MARKER}'.")
         sys.exit(1)
         
     replacement = f"{new_code},\n      {INSERTION_MARKER}"
@@ -100,28 +90,21 @@ def inject_code(new_code):
     
     with open(SOURCE_FILE_PATH, "w", encoding="utf-8") as f:
         f.write(new_content)
-    print("✅ Código inyectado correctamente.")
+    print("✅ Código inyectado.")
 
 def main():
     if not API_KEY:
-        print("❌ Error: Falta GEMINI_API_KEY.")
-        sys.exit(1)
+        print("❌ Error: Falta AI_API_KEY.")
+        sys.exit(1) # Este es el error que te salió antes
 
     clean_title = ISSUE_TITLE.replace("[COMPONENT REQUEST]", "").strip()
     print(f"🚀 Procesando: {clean_title}")
 
-    # 1. Contexto y Búsqueda
     source_code = read_source_file()
-    search_context = search_web(f"{clean_title} datasheet technical specifications")
-
-    # 2. Generación con Gemini
+    search_context = search_web(f"{clean_title} datasheet specifications")
     dart_code = generate_dart_code(source_code, search_context, clean_title)
     
-    print("\n--- CÓDIGO GEMINI ---\n")
-    print(dart_code)
-    print("\n---------------------\n")
-
-    # 3. Inyección
+    print(f"\nGenerado:\n{dart_code}\n")
     inject_code(dart_code)
 
 if __name__ == "__main__":
