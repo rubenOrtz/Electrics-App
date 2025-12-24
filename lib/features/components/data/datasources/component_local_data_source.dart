@@ -429,6 +429,19 @@ class ComponentLocalDataSource implements domain.ComponentRepository {
         price: 4.20,
       ),
 
+      const ComponentTemplate.protection(
+        id: 'sch-m9u11206-6a-c',
+        name: 'Multi9 C60N 1P 6A C',
+        manufacturer: 'Schneider Electric',
+        series: 'Multi9',
+        isFavorite: false,
+        ratedCurrent: 6,
+        curveType: 'C',
+        breakingCapacity: 10,
+        poles: 1,
+        deviceType: ProtectionDeviceType.circuitBreaker,
+        price: 26.50,
+      ),,
       // [AI_INSERT_POINT]
     ];
   }
