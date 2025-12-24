@@ -1,10 +1,10 @@
 import os
 import sys
-from google import genai # <--- NUEVA LIBRERÍA
+from google import genai
 from duckduckgo_search import DDGS
 
 # --- CONFIGURACIÓN ---
-API_KEY = os.getenv("AI_API_KEY")
+API_KEY = os.getenv("AI_API_KEY") 
 ISSUE_BODY = os.getenv("ISSUE_BODY", "")
 ISSUE_TITLE = os.getenv("ISSUE_TITLE", "")
 SOURCE_FILE_PATH = "lib/features/components/data/datasources/component_local_data_source.dart"
@@ -13,6 +13,7 @@ INSERTION_MARKER = "// [AI_INSERT_POINT]"
 def search_web(query):
     print(f"🔍 Buscando en web: {query}...")
     try:
+        # Usamos duckduckgo_search (que internamente avisa del cambio de nombre, pero funciona)
         results = DDGS().text(query, max_results=3)
         context_text = ""
         if results:
@@ -34,7 +35,6 @@ def read_source_file():
         sys.exit(1)
 
 def generate_dart_code(source_code, search_context, clean_title):
-    # --- CAMBIO IMPORTANTE: NUEVO CLIENTE ---
     client = genai.Client(api_key=API_KEY)
     
     context_snippet = source_code[-4000:]
@@ -59,11 +59,11 @@ def generate_dart_code(source_code, search_context, clean_title):
     3. Inventa ID único.
     """
 
-    print("⚡ Preguntando a Gemini (Nuevo SDK)...")
+    print("⚡ Preguntando a Gemini (Modelo Estable)...")
     try:
-        # --- CAMBIO IMPORTANTE: NUEVA LLAMADA ---
+        # --- CORRECCIÓN AQUÍ: Usamos 1.5 Flash que sí está en el Free Tier ---
         response = client.models.generate_content(
-            model='gemini-2.0-flash', # Usamos el modelo más nuevo y rápido
+            model='gemini-1.5-flash', 
             contents=prompt
         )
         
@@ -94,8 +94,8 @@ def inject_code(new_code):
 
 def main():
     if not API_KEY:
-        print("❌ Error: Falta AI_API_KEY.")
-        sys.exit(1) # Este es el error que te salió antes
+        print("❌ Error: Falta AI_API_KEY. Revisa los Secrets de GitHub.")
+        sys.exit(1)
 
     clean_title = ISSUE_TITLE.replace("[COMPONENT REQUEST]", "").strip()
     print(f"🚀 Procesando: {clean_title}")
