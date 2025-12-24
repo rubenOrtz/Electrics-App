@@ -1,0 +1,82 @@
+name: 🚀 Production Release
+
+on:
+  push:
+    tags:
+      - 'v*' # Se activa con tags como v1.0, v2.3.1, etc.
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    name: 🤖 Build Android APK
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: ☕ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: 📦 Get Dependencies
+        run: flutter pub get
+
+      # Magia 1: Decodificamos el Keystore desde el secreto
+      - name: 🔐 Decode Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+
+      # Magia 2: Creamos el archivo key.properties para que Android lo lea
+      - name: 🔑 Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
+
+      # Magia 3: Construimos ofuscando el código Dart y separando los símbolos
+      - name: 🏗️ Build APK (Obfuscated)
+        run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
+
+      # Subimos el APK para la Release
+      - name: 📤 Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+
+      # Subimos los símbolos de depuración (Guardalos por si hay errores futuros)
+      - name: 🗺️ Upload Debug Symbols
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-symbols
+          path: build/app/outputs/symbols
+
+  release:
+    name: 📦 Create GitHub Release
+    needs: [build-android]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Download APK Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release-apk
+
+      - name: 🎉 Publish Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: app-release.apk
+          name: "Release ${{ github.ref_name }}"
+          body: "🚀 Nueva versión generada automáticamente.\n\n### Cambios:\n- Actualización automática desde Main.\n- Código ofuscado y optimizado."
+          draft: false
+          prerelease: false
