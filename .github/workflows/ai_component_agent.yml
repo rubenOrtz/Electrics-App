@@ -52,7 +52,7 @@ jobs:
             
             ### 🤖 Estado del Agente:
             - **Búsqueda Web:** ✅ Realizada
-            - **Generación:** ✅ Gemini 1.5 Flash
+            - **Generación:** ✅ Gemini 3.0 Flash
             - **Formato:** ✅ Dart Format aplicado
             
             ### ⚠️ Acción Requerida:
