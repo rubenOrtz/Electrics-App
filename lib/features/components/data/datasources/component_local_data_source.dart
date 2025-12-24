@@ -429,6 +429,19 @@ class ComponentLocalDataSource implements domain.ComponentRepository {
         price: 4.20,
       ),
 
+      const ComponentTemplate.protection(
+        id: 'abb-s200-16a-c-2p',
+        name: 'Auto S200 2P 16A C',
+        manufacturer: 'ABB',
+        series: 'S200',
+        isFavorite: false,
+        ratedCurrent: 16,
+        curveType: 'C',
+        breakingCapacity: 6,
+        poles: 2,
+        deviceType: ProtectionDeviceType.circuitBreaker,
+        price: 15.30,
+      ),,
       // [AI_INSERT_POINT]
     ];
   }
