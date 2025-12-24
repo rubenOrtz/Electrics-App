@@ -428,7 +428,6 @@ class ComponentLocalDataSource implements domain.ComponentRepository {
         installationMethod: 'E',
         price: 4.20,
       ),
-
       const ComponentTemplate.protection(
         id: 'sch-m9u11206-6a-c',
         name: 'Multi9 C60N 1P 6A C',
@@ -441,7 +440,7 @@ class ComponentLocalDataSource implements domain.ComponentRepository {
         poles: 1,
         deviceType: ProtectionDeviceType.circuitBreaker,
         price: 26.50,
-      ),,
+      ),
       // [AI_INSERT_POINT]
     ];
   }
