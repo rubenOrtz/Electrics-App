@@ -62,5 +62,5 @@ jobs:
           base: main
           labels: "ai-generated, components"
           delete-branch: true
-          # 👇 CAMBIO AQUÍ: Tu usuario fijo
+          # It has to go through me.
           reviewers: rubenOrtz
