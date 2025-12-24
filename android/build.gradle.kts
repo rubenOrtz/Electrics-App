@@ -29,6 +29,14 @@ subprojects {
             } catch (e: Exception) {
                // ignore
             }
+
+            try {
+                val setCompileSdkVersion = android.javaClass.getMethod("setCompileSdkVersion", Int::class.javaPrimitiveType)
+                setCompileSdkVersion.invoke(android, 36)
+                println("Forced compileSdkVersion to 36 for subproject: $name")
+            } catch (e: Exception) {
+                println("Could not set compileSdkVersion for $name: $e")
+            }
         }
     }
 }
