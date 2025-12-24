@@ -71,11 +71,16 @@ jobs:
         with:
           name: release-apk
 
+      # 👇 NUEVO PASO: Renombrar el archivo usando el Tag (v1.0.0)
+      - name: 🏷️ Rename APK
+        run: mv app-release.apk Electrics-App-${{ github.ref_name }}.apk
+
       - name: 🎉 Publish Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: app-release.apk
+          # 👇 AHORA SUBIMOS EL ARCHIVO CON EL NUEVO NOMBRE
+          files: Electrics-App-${{ github.ref_name }}.apk
           name: "Release ${{ github.ref_name }}"
           body: "🚀 Nueva versión generada automáticamente.\n\n### Cambios:\n- Actualización automática desde Main.\n- Código ofuscado y optimizado."
           draft: false

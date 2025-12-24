@@ -4,7 +4,6 @@ import java.io.FileInputStream
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // El plugin de Flutter debe ir despues de Android y Kotlin
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -29,7 +28,6 @@ android {
     }
 
     defaultConfig {
-        // Asegurate de que este ID es el correcto de tu app
         applicationId = "com.example.electrician_app"
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
@@ -48,13 +46,10 @@ android {
 
     buildTypes {
         getByName("release") {
-            // Asignamos la firma de release creada arriba
             signingConfig = signingConfigs.getByName("release")
             
-            // Sintaxis Kotlin para ofuscacion
             isMinifyEnabled = true
             isShrinkResources = true
-            
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
