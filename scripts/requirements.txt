@@ -1,4 +1,4 @@
-google-generativeai
+google-genai
 duckduckgo-search
 requests
 beautifulsoup4
