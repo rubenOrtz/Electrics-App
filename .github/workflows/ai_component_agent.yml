@@ -1,0 +1,60 @@
+name: 🤖 AI Component Generator (Gemini)
+
+on:
+  issues:
+    types: [opened, edited]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  generate-component-pr:
+    if: startsWith(github.event.issue.title, '[COMPONENT REQUEST]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: 📦 Install Dependencies
+        run: |
+          pip install -r scripts/requirements.txt
+
+      - name: ⚡ Run Gemini Generator
+        env:
+          GEMINI_API_KEY: ${{ secrets.AI_API_KEY }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: python scripts/ai_component_generator.py
+
+      - name: 🧹 Format Code
+        run: dart format lib/features/components/data/datasources/component_local_data_source.dart || true
+
+      - name: 🚀 Create Pull Request
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "feat(components): Add ${{ github.event.issue.title }} via Gemini"
+          title: "⚡ Gemini PR: ${{ github.event.issue.title }}"
+          body: |
+            Esta PR ha sido generada automáticamente por Google Gemini 1.5 Flash.
+            
+            **Solicitud Original:** #${{ github.event.issue.number }}
+            
+            ### 🤖 Estado:
+            - **Búsqueda Web:** Realizada
+            - **Generación:** Gemini 1.5 Flash
+            - **Formato:** Dart Format aplicado
+            
+            **⚠️ Acción Requerida:**
+            Revisa los valores técnicos antes de hacer Merge.
+          branch: "gemini-component-${{ github.event.issue.number }}"
+          base: main
+          labels: "ai-generated, components"
+          delete-branch: true
