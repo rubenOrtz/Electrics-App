@@ -12,6 +12,28 @@ val newBuildDir: Directory =
 rootProject.layout.buildDirectory.value(newBuildDir)
 
 subprojects {
+    afterEvaluate {
+        val android = extensions.findByName("android")
+        if (android != null) {
+            try {
+                val getNamespace = android.javaClass.getMethod("getNamespace")
+                if (getNamespace.invoke(android) == null) {
+                    val setNamespace = android.javaClass.getMethod("setNamespace", String::class.java)
+                    var packageName = group.toString()
+                    if (packageName == "null" || packageName.isEmpty()) {
+                        packageName = "com.example.${name.replace("-", "_")}"
+                    }
+                    setNamespace.invoke(android, packageName)
+                    println("Set namespace for $name to $packageName")
+                }
+            } catch (e: Exception) {
+               // ignore
+            }
+        }
+    }
+}
+
+subprojects {
     val newSubprojectBuildDir: Directory = newBuildDir.dir(project.name)
     project.layout.buildDirectory.value(newSubprojectBuildDir)
 }
