@@ -7,33 +7,21 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-def keystoreProperties = new Properties()
-def keystorePropertiesFile = rootProject.file('key.properties')
+val keystoreProperties = Properties()
+val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+    keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
 android {
     namespace = "com.example.electrician_app"
+    
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
-    }
-
-    signingConfigs {
-        release {
-            // 2. 👇 Usamos los valores cargados arriba.
-            // Si el archivo no existe (en local a veces), evitamos errores null.
-            if (keystorePropertiesFile.exists()) {
-                keyAlias = keystoreProperties['keyAlias']
-                keyPassword = keystoreProperties['keyPassword']
-                storeFile = keystoreProperties['storeFile'] ? file(keystoreProperties['storeFile']) : null
-                storePassword = keystoreProperties['storePassword']
-            }
-        }
     }
 
     kotlinOptions {
@@ -43,7 +31,9 @@ android {
     defaultConfig {
         applicationId = "com.example.electrician_app"
         minSdk = flutter.minSdkVersion
+        
         targetSdk = 36
+        
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -58,12 +48,12 @@ android {
     }
 
     buildTypes {
-        release {
+        getByName("release") {
             signingConfig = signingConfigs.getByName("release")
             
-            minifyEnabled false 
-            shrinkResources false
-
+            isMinifyEnabled = true
+            isShrinkResources = true
+            
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
