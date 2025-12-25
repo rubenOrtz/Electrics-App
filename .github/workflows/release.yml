@@ -242,17 +242,33 @@ jobs:
           VERSION: ${{ needs.verify-and-build.outputs.version }}
           BUILD: ${{ needs.verify-and-build.outputs.build_number }}
         run: |
-          # Move files to current directory with semantic naming
-          mv artifacts/app-release.aab ${APP_NAME}-${VERSION}-build${BUILD}.aab
-          mv artifacts/app-release.apk ${APP_NAME}-${VERSION}-build${BUILD}.apk
+          # 1. Define the source paths based on your log output
+          APK_SRC="artifacts/app/outputs/apk/release/app-release.apk"
+          AAB_SRC="artifacts/app/outputs/bundle/release/app-release.aab"
+          SYMBOLS_SRC="artifacts/debug-symbols"
+
+          # 2. Define the new semantic names
+          APK_DEST="${APP_NAME}-${VERSION}-build${BUILD}.apk"
+          AAB_DEST="${APP_NAME}-${VERSION}-build${BUILD}.aab"
+          SYMBOLS_ZIP="debug-symbols-${VERSION}.zip"
+
+          echo "🚀 Moving and renaming artifacts..."
+
+          # 3. Move and rename APK & AAB to the root directory
+          if [ -f "$APK_SRC" ]; then mv "$APK_SRC" "$APK_DEST"; else echo "❌ APK not found"; exit 1; fi
+          if [ -f "$AAB_SRC" ]; then mv "$AAB_SRC" "$AAB_DEST"; else echo "❌ AAB not found"; exit 1; fi
           
-          # Zip debug symbols for release attachment
-          cd artifacts/debug-symbols
-          zip -r ../../debug-symbols-${VERSION}.zip .
-          cd ../..
-          
-          # Verify renamed files
-          ls -lh *.aab *.apk *.zip
+          # 4. Zip the debug symbols from their subfolder
+          if [ -d "$SYMBOLS_SRC" ]; then
+            cd "$SYMBOLS_SRC"
+            zip -r "../../$SYMBOLS_ZIP" .
+            cd ../..
+          else
+            echo "❌ Debug symbols folder not found"; exit 1
+          fi
+
+          # 5. Final Verification
+          ls -lh "$APK_DEST" "$AAB_DEST" "$SYMBOLS_ZIP"
           echo "✅ Assets prepared for release"
 
       # CRITICAL: Tag creation happens AFTER successful build
