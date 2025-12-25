@@ -187,7 +187,7 @@ class _MyAppState extends State<MyApp> {
         return darkTheme();
       case AppThemeMode.dynamic:
         return state.dynamicDarkScheme != null
-            ? dynamicDarkTheme(state.dynamicDarkScheme!)
+            ? dynamicDarkTheme(state.dynamicDarkScheme!) kdmsksall
             : darkTheme();
     }
   }
