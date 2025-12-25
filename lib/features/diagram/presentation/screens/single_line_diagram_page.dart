@@ -740,7 +740,11 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
                 cosPhi: latestNode.cosPhi,
                 lengthMeters: latestNode.inputCable?.lengthMeters ?? 10,
                 sectionMm2: latestNode.inputCable?.sectionMm2,
-                installMethod: "Standard",
+                installMethod:
+                    latestNode.inputCable?.method ?? InstallationMethod.b1,
+                insulation:
+                    latestNode.inputCable?.insulation ?? CableInsulation.pvc,
+                correctionFactors: latestNode.inputCable?.factors,
                 cableCatalogData: latestNode.cableCatalogData,
               ),
               onSave: (data) async {
@@ -749,12 +753,19 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
 
                   final updatedCable = n.inputCable?.copyWith(
                           lengthMeters: data.lengthMeters,
-                          sectionMm2: data.sectionMm2 ?? 2.5) ??
+                          sectionMm2: data.sectionMm2 ?? 2.5,
+                          method: data.installMethod,
+                          insulation: data.insulation,
+                          factors: data.correctionFactors ??
+                              const CorrectionFactors()) ??
                       ConductorAttributes(
                           lengthMeters: data.lengthMeters,
                           sectionMm2: data.sectionMm2 ?? 2.5,
                           material: ConductorMaterial.copper,
-                          insulation: CableInsulation.pvc,
+                          insulation: data.insulation,
+                          method: data.installMethod,
+                          factors: data.correctionFactors ??
+                              const CorrectionFactors(),
                           label: "Cable");
 
                   return n.copyWith(
