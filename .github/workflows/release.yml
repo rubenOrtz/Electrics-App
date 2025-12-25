@@ -5,7 +5,7 @@ on:
     inputs:
       version:
         description: 'Versión Semántica (ej: v1.0.0)'
-        required: true
+        required: true 
         default: 'v1.0.0'
 
 permissions:
@@ -13,25 +13,43 @@ permissions:
 
 jobs:
   # -----------------------------------------------------------------
-  # JOB 1: INTEGRACIÓN CONTINUA (Build & Verify)
-  # Este trabajo NO modifica el repo. Es seguro. Si falla, no pasa nada.
+  # JOB 1: CI - BUILD, VERIFY & PACKAGE
   # -----------------------------------------------------------------
   build-android:
-    name: 🏗️ Build & Verify
+    name: 🏗️ Build, Verify & Package
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      # 🛡️ VALIDACIÓN DE SEGURIDAD
-      # Evita tags basura como "v1" o "test". Obliga a formato vX.X.X
-      - name: 🛡️ Validate SemVer
+      # 1. VALIDACIÓN SEMÁNTICA (Input vs Regex)
+      - name: 🛡️ Validate SemVer Input
         run: |
           if [[ ! "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
             echo "❌ Error: La versión '${{ inputs.version }}' no cumple el formato vX.Y.Z"
             exit 1
           fi
-          echo "✅ Versión válida: ${{ inputs.version }}"
+          echo "✅ Formato de versión válido."
+
+      # 2. VALIDACIÓN DE CONSISTENCIA (Input vs Pubspec.yaml)
+      # Esto evita el problema de "Fake Versioning".
+      - name: 🔍 Verify Pubspec Version
+        run: |
+          # Extraer versión del pubspec (ej: 1.0.0+1 -> 1.0.0)
+          PUBSPEC_VER=$(grep 'version:' pubspec.yaml | sed 's/version: //g' | cut -d '+' -f 1 | xargs)
+          
+          # Quitar la 'v' del input para comparar (v1.0.0 -> 1.0.0)
+          INPUT_VER=${{ inputs.version }}
+          INPUT_CLEAN=${INPUT_VER#v}
+
+          if [ "$PUBSPEC_VER" != "$INPUT_CLEAN" ]; then
+            echo "⛔ CRITICAL MISMATCH:"
+            echo "   - Input Tag: $INPUT_CLEAN"
+            echo "   - Pubspec:   $PUBSPEC_VER"
+            echo ">> Actualiza el pubspec.yaml antes de lanzar la release."
+            exit 1
+          fi
+          echo "✅ Pubspec coincide con el Tag ($PUBSPEC_VER)."
 
       - name: ☕ Setup Java
         uses: actions/setup-java@v4
@@ -64,45 +82,70 @@ jobs:
           echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
           echo "storeFile=upload-keystore.jks" >> android/key.properties
 
+      # 3. BUILD CON OFUSCACIÓN REAL
       - name: 🏗️ Build APK (Obfuscated)
         run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
 
-      # Guardamos el APK como artefacto temporal. Si el release falla, el APK sigue aquí.
-      - name: 📤 Upload Artifact
+      # 4. EMPAQUETADO DE SÍMBOLOS (Corrección Critical Data Loss)
+      - name: 🤐 Zip Debug Symbols
+        run: |
+          cd build/app/outputs/symbols
+          zip -r debug-symbols.zip .
+          cd -
+
+      # 5. SUBIDA DE ARTEFACTOS (APK + Símbolos)
+      - name: 📤 Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 1
 
+      - name: 📤 Upload Symbols Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: debug-symbols
+          path: build/app/outputs/symbols/debug-symbols.zip
+          retention-days: 1
+
   # -----------------------------------------------------------------
-  # JOB 2: DESPLIEGUE CONTINUO (Release & Tag)
-  # Solo se ejecuta si el Job 1 fue exitoso (needs: build-android).
+  # JOB 2: CD - RELEASE & TAGGING
   # -----------------------------------------------------------------
   release:
-    name: 📦 Tag & Draft Release
-    needs: [build-android] # ¡La clave de la seguridad!
+    name: 📦 Publish Draft Release
+    needs: [build-android]
     runs-on: ubuntu-latest
     steps:
+      # 6. HISTORIAL COMPLETO (Corrección Shallow History)
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necesario para generar Release Notes automáticas
 
-      - name: 📥 Download Artifact
+      - name: 📥 Download APK
         uses: actions/download-artifact@v4
         with:
           name: app-release
 
-      - name: 🏷️ Rename APK
-        run: mv app-release.apk Electrics-App-${{ inputs.version }}.apk
+      - name: 📥 Download Symbols
+        uses: actions/download-artifact@v4
+        with:
+          name: debug-symbols
 
-      # Esta acción crea el Tag Y la Release al mismo tiempo.
-      # Si algo falla aquí, no hemos ensuciado el repo manualmente antes.
+      - name: 🏷️ Rename Artifacts
+        run: |
+          mv app-release.apk Electrics-App-${{ inputs.version }}.apk
+          mv debug-symbols.zip debug-symbols-${{ inputs.version }}.zip
+
+      # 7. PUBLICACIÓN SEGURA (Action Actualizada v2)
       - name: 🎉 Create Release & Tag
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ inputs.version }}
           name: "Release ${{ inputs.version }}"
-          files: Electrics-App-${{ inputs.version }}.apk
-          draft: true       
-          prerelease: false 
-          generate_release_notes: true 
+          files: |
+            Electrics-App-${{ inputs.version }}.apk
+            debug-symbols-${{ inputs.version }}.zip
+          draft: true
+          prerelease: false
+          generate_release_notes: true
