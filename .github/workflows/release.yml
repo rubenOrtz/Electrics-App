@@ -23,6 +23,7 @@ jobs:
     outputs:
       app_name: ${{ steps.meta.outputs.APP_NAME }}
       version: ${{ steps.meta.outputs.VERSION }}
+      version_tag: ${{ steps.meta.outputs.VERSION_TAG }}
       build_number: ${{ steps.meta.outputs.BUILD_NUMBER }}
       is_release: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
@@ -55,38 +56,40 @@ jobs:
             echo "✅ Validated: $APP_NAME v$VERSION_BASE (Build: $BUILD_NUMBER)"
             
             # Export for subsequent steps
+            # CRITICAL FIX: Include build number in tag to allow hotfixes (v1.0.0-b1, v1.0.0-b2)
             echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
             echo "VERSION=v$VERSION_BASE" >> $GITHUB_OUTPUT
+            echo "VERSION_TAG=v$VERSION_BASE-b$BUILD_NUMBER" >> $GITHUB_OUTPUT
             echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
       # 2. VERSION INCREMENT CHECK
       - name: 🔍 Verify Version Was Bumped
         if: github.event_name == 'workflow_dispatch'
         env:
-          VERSION: ${{ steps.meta.outputs.VERSION }}
+          VERSION_TAG: ${{ steps.meta.outputs.VERSION_TAG }}
         run: |
           # Get the latest tag
-          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0-b0")
           
-          if [[ "$VERSION" == "$LATEST_TAG" ]]; then
-            echo "⛔ ERROR: Version in pubspec.yaml was not bumped!"
-            echo "   Current version: $VERSION"
+          if [[ "$VERSION_TAG" == "$LATEST_TAG" ]]; then
+            echo "⛔ ERROR: Build number was not incremented!"
+            echo "   Current tag: $VERSION_TAG"
             echo "   Latest tag: $LATEST_TAG"
-            echo "   Action: Increment version in pubspec.yaml before releasing"
+            echo "   Action: Increment build number in pubspec.yaml (e.g., 1.0.0+1 -> 1.0.0+2)"
             exit 1
           fi
           
-          echo "✅ Version bumped from $LATEST_TAG to $VERSION"
+          echo "✅ Version bumped from $LATEST_TAG to $VERSION_TAG"
 
       # 3. GIT TAG COLLISION CHECK
       - name: 🛑 Check Tag Uniqueness
         if: github.event_name == 'workflow_dispatch'
         env:
-          TAG: ${{ steps.meta.outputs.VERSION }}
+          TAG: ${{ steps.meta.outputs.VERSION_TAG }}
         run: |
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "⛔ ERROR: Git tag '$TAG' already exists"
-            echo "   Action: Bump version in pubspec.yaml before releasing"
+            echo "   Action: Increment build number in pubspec.yaml"
             exit 1
           fi
           echo "✅ Tag '$TAG' is available"
@@ -111,7 +114,7 @@ jobs:
       - name: 🏗️ Generate Code
         run: dart run build_runner build --delete-conflicting-outputs
 
-      # 5. CONFIG GENERATION - Using Individual Secrets (Not Monolithic JSON)
+      # 5. CONFIG GENERATION - Shell Injection Safe (Using jq)
       - name: 🔐 Generate Environment Config
         env:
           API_KEY: ${{ secrets.API_KEY }}
@@ -128,14 +131,12 @@ jobs:
             exit 1
           fi
           
-          # Generate config from template
-          # This allows CI to inject values without knowing the full schema
-          cat > env.json << EOF
-          {
-            "API_KEY": "$API_KEY",
-            "BASE_URL": "$BASE_URL"
-          }
-          EOF
+          # SECURITY FIX: Use jq to safely construct JSON (prevents shell injection)
+          # If a secret contains ", `, or $, cat EOF would break or execute code
+          jq -n \
+            --arg apiKey "$API_KEY" \
+            --arg baseUrl "$BASE_URL" \
+            '{API_KEY: $apiKey, BASE_URL: $baseUrl}' > env.json
           
           # Validate generated JSON
           jq empty env.json || {
@@ -143,7 +144,7 @@ jobs:
             exit 1
           }
           
-          echo "✅ Environment config generated with $(jq 'keys | length' env.json) keys"
+          echo "✅ Environment config generated securely with $(jq 'keys | length' env.json) keys"
 
       - name: 🕵️ Static Analysis
         run: flutter analyze --fatal-infos --fatal-warnings
@@ -249,11 +250,12 @@ jobs:
           echo "✅ Assets prepared for release"
 
       # CRITICAL: Tag creation happens AFTER successful build
+      # Tags include build number to allow hotfixes (v1.0.0-b1, v1.0.0-b2)
       - name: 🎉 Create Release & Tag
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.verify-and-build.outputs.version }}
-          name: "Release ${{ needs.verify-and-build.outputs.version }}"
+          tag_name: ${{ needs.verify-and-build.outputs.version_tag }}
+          name: "Release ${{ needs.verify-and-build.outputs.version }} (Build ${{ needs.verify-and-build.outputs.build_number }})"
           body: |
             ## 🚀 Production Release ${{ needs.verify-and-build.outputs.version }}
             
