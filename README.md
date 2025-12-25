@@ -1,3 +1,5 @@
+> **⚠ AVISO ⚠**  
+> Es ilegal el uso con fines lucrativos o comercial de este producto. Seguimos APGL-3.0. Lee la licencia.
 # ⚡ Electrics-App: El Gemelo Digital en tu bolsillo
 
 [![Release](https://img.shields.io/github/v/release/rubenOrtz/Electrics-App?include_prereleases&sort=date&display_name=release&style=for-the-badge)](https://github.com/rubenOrtz/Electrics-App/releases)
