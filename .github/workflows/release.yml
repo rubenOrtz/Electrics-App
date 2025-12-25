@@ -8,10 +8,10 @@ permissions:
 
 jobs:
   # -----------------------------------------------------------------
-  # JOB 1: QUALITY GATE, BUILD & TAG
+  # JOB 1: QUALITY GATE & BUILD
   # -----------------------------------------------------------------
-  build-and-tag:
-    name: 🛡️ Build, Verify & Tag
+  verify-and-build:
+    name: 🛡️ Verify, Build & Package
     runs-on: ubuntu-latest
     outputs:
       app_name: ${{ steps.meta.outputs.APP_NAME }}
@@ -23,54 +23,54 @@ jobs:
         with:
           fetch-depth: 0
 
-      # 1. ROBUST METADATA
-      - name: 🧠 Extract Metadata
+      # 1. STRICT VERSION VALIDATION
+      - name: 🧠 Extract & Validate Metadata
         id: meta
-        uses: mikefarah/yq@master
-        with:
-          cmd: |
-            APP_NAME=$(yq '.name' pubspec.yaml)
-            VERSION_FULL=$(yq '.version' pubspec.yaml)
-            
-            # Split SemVer (1.0.0) and Build (1)
-            # We use standard bash string manipulation for safety
-            VERSION_BASE=${VERSION_FULL%+*}
-            BUILD_NUMBER=${VERSION_FULL#*+}
-
-            echo "✅ Detected: $APP_NAME v$VERSION_BASE (Build: $BUILD_NUMBER)"
-            
-            # Output for GitHub Actions
-            echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
-            echo "VERSION=v$VERSION_BASE" >> $GITHUB_OUTPUT
-            echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
-
-      # 2. VERSION VALIDATION 
-      - name: 🛑 Validate Version Integrity
-        env:
-          TAG: ${{ steps.meta.outputs.VERSION }}
-          BUILD_NUM: ${{ steps.meta.outputs.BUILD_NUMBER }}
         run: |
-          # 1. Check Git Tag Collision
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-             echo "⛔ ERROR: Tag '$TAG' already exists."
-             exit 1
-          fi
-
-          # 2. Check Build Number Logic (Basic Check)
-          # In a real enterprise setup, we would query the Play Store API here.
-          # For now, we ensure it's not 'null' or equal to the version string.
-          if [[ -z "$BUILD_NUM" || "$BUILD_NUM" == "$TAG" ]]; then
-             echo "⛔ ERROR: Malformed Build Number. Format must be x.y.z+n"
-             exit 1
+          # Install yq for YAML parsing
+          sudo wget -qO /usr/local/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+          
+          APP_NAME=$(yq '.name' pubspec.yaml)
+          VERSION_FULL=$(yq '.version' pubspec.yaml)
+          
+          # STRICT REGEX VALIDATION: Must be x.y.z+n
+          if [[ ! "$VERSION_FULL" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$ ]]; then
+            echo "⛔ ERROR: Invalid version format in pubspec.yaml"
+            echo "   Found: '$VERSION_FULL'"
+            echo "   Required format: x.y.z+n (e.g., 1.0.0+1)"
+            exit 1
           fi
           
-          echo "✅ Version Integrity Passed."
+          # Extract components AFTER validation
+          VERSION_BASE=${VERSION_FULL%+*}
+          BUILD_NUMBER=${VERSION_FULL#*+}
+          
+          echo "✅ Validated: $APP_NAME v$VERSION_BASE (Build: $BUILD_NUMBER)"
+          
+          # Export for subsequent steps
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "VERSION=v$VERSION_BASE" >> $GITHUB_OUTPUT
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+
+      # 2. GIT TAG COLLISION CHECK
+      - name: 🛑 Check Tag Uniqueness
+        env:
+          TAG: ${{ steps.meta.outputs.VERSION }}
+        run: |
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "⛔ ERROR: Git tag '$TAG' already exists"
+            echo "   Action: Bump version in pubspec.yaml before releasing"
+            exit 1
+          fi
+          echo "✅ Tag '$TAG' is available"
 
       - name: ☕ Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: 🐦 Setup Flutter
         uses: subosito/flutter-action@v2
@@ -81,28 +81,31 @@ jobs:
       - name: 📦 Install Dependencies
         run: flutter pub get
 
-      # 3. CODE GENERATION
-      - name: 🏗️ Run Build Runner
-        run: flutter pub run build_runner build --delete-conflicting-outputs
+      # 3. CODE GENERATION (Modern Dart Command)
+      - name: 🏗️ Generate Code
+        run: dart run build_runner build --delete-conflicting-outputs
 
-      # 4. CONFIG VALIDATION
-      - name: 🔐 Generate & Validate Config
+      # 4. DECOUPLED CONFIG GENERATION
+      # NOTE: Store the entire config JSON as a single secret: ENV_CONFIG_JSON
+      # This decouples CI from app config schema - no hardcoded keys!
+      - name: 🔐 Generate Environment Config
         env:
-          API_KEY: ${{ secrets.API_KEY }}
-          BASE_URL: ${{ secrets.BASE_URL }}
+          ENV_CONFIG: ${{ secrets.ENV_CONFIG_JSON }}
         run: |
-          # Fail if secrets are empty
-          if [[ -z "$API_KEY" || -z "$BASE_URL" ]]; then
-            echo "⛔ CRITICAL: One or more secrets are missing!"
+          if [[ -z "$ENV_CONFIG" ]]; then
+            echo "⛔ CRITICAL: ENV_CONFIG_JSON secret is missing!"
+            echo "   Create it in GitHub Settings > Secrets with your full config JSON"
             exit 1
           fi
-
-          echo "Generating secure config..."
-          # Safe JSON generation using jq arguments
-          jq -n \
-            --arg apiKey "$API_KEY" \
-            --arg baseUrl "$BASE_URL" \
-            '{API_KEY: $apiKey, BASE_URL: $baseUrl}' > env.json
+          
+          # Validate JSON syntax
+          echo "$ENV_CONFIG" | jq empty || {
+            echo "⛔ ERROR: ENV_CONFIG_JSON is not valid JSON"
+            exit 1
+          }
+          
+          echo "$ENV_CONFIG" > env.json
+          echo "✅ Environment config generated and validated"
 
       - name: 🕵️ Static Analysis
         run: flutter analyze --fatal-infos --fatal-warnings
@@ -110,79 +113,109 @@ jobs:
       - name: 🧪 Unit Tests
         run: flutter test
 
-      # 5. KEYSTORE FIX
-      - name: 🔐 Setup Keystore
+      # 5. ANDROID SIGNING SETUP (Fixed Path Resolution)
+      - name: 🔐 Configure Android Signing
         run: |
-          # Decode JKS into the 'app' module folder
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          # Decode keystore to android/ directory (not android/app/)
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
           
-          # Write properties to the 'android' root folder
-          # We use "app/" prefix because Gradle evaluates this path relative to the root settings
-          echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" > android/key.properties
-          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
-          echo "storeFile=app/upload-keystore.jks" >> android/key.properties
+          # Create key.properties in android/ directory
+          # Gradle resolves paths relative to android/, so use direct filename
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=upload-keystore.jks
+          EOF
+          
+          echo "✅ Keystore configured at android/upload-keystore.jks"
 
       - name: 🏗️ Build Production AAB
         run: |
           flutter build appbundle --release \
-            --obfuscate --split-debug-info=build/app/outputs/symbols \
+            --obfuscate \
+            --split-debug-info=build/app/outputs/symbols \
             --dart-define-from-file=env.json
 
-      - name: 🤐 Zip Debug Symbols
+      - name: 📦 Package Debug Symbols
         run: |
           cd build/app/outputs/symbols
-          zip -r debug-symbols.zip .
+          zip -r symbols.zip .
+          mv symbols.zip ../../../debug-symbols.zip
           cd -
 
-      - name: 🏷️ Push Git Tag
+      # 6. SECURITY CLEANUP (Remove sensitive files)
+      - name: 🧹 Remove Sensitive Files
+        if: always()
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git tag ${{ steps.meta.outputs.VERSION }}
-          git push origin ${{ steps.meta.outputs.VERSION }}
+          rm -f env.json
+          rm -f android/key.properties
+          rm -f android/upload-keystore.jks
+          echo "✅ Cleaned up sensitive files"
 
-      - name: 📤 Upload Artifacts
+      - name: 📤 Upload Release Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: release-bundle
           path: |
             build/app/outputs/bundle/release/app-release.aab
-            build/app/outputs/symbols/debug-symbols.zip
+            build/debug-symbols.zip
           retention-days: 1
 
   # -----------------------------------------------------------------
-  # JOB 2: GITHUB RELEASE
+  # JOB 2: PUBLISH RELEASE (Tag Creation Happens Here!)
   # -----------------------------------------------------------------
   publish-release:
-    name: 📦 Publish to GitHub
-    needs: [build-and-tag]
+    name: 📦 Create GitHub Release
+    needs: [verify-and-build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: 📥 Download Artifacts
+      - name: 📥 Download Build Artifacts
         uses: actions/download-artifact@v4
         with:
           name: release-bundle
           path: artifacts
 
-      - name: 🏷️ Rename Assets
+      - name: 🏷️ Prepare Release Assets
         env:
-          APP_NAME: ${{ needs.build-and-tag.outputs.app_name }}
-          VERSION: ${{ needs.build-and-tag.outputs.version }}
-          BUILD: ${{ needs.build-and-tag.outputs.build_number }}
+          APP_NAME: ${{ needs.verify-and-build.outputs.app_name }}
+          VERSION: ${{ needs.verify-and-build.outputs.version }}
+          BUILD: ${{ needs.verify-and-build.outputs.build_number }}
         run: |
-          mv artifacts/app-release.aab ${APP_NAME}-${VERSION}-b${BUILD}.aab
+          # Rename with semantic versioning
+          mv artifacts/app-release.aab ${APP_NAME}-${VERSION}-build${BUILD}.aab
           mv artifacts/debug-symbols.zip debug-symbols-${VERSION}.zip
+          
+          # Verify files exist
+          ls -lh *.aab *.zip
 
-      - name: 🎉 Create Release
+      # CRITICAL FIX: Tag creation happens AFTER successful build
+      # If this step fails, no tag is created - prevents orphaned tags
+      - name: 🎉 Create Release & Tag
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ needs.build-and-tag.outputs.version }}
-          name: "Production Release ${{ needs.build-and-tag.outputs.version }}"
+          tag_name: ${{ needs.verify-and-build.outputs.version }}
+          name: "Release ${{ needs.verify-and-build.outputs.version }}"
+          body: |
+            ## 🚀 Production Release ${{ needs.verify-and-build.outputs.version }}
+            
+            **Build Number:** ${{ needs.verify-and-build.outputs.build_number }}
+            **App:** ${{ needs.verify-and-build.outputs.app_name }}
+            
+            ### 📦 Downloads
+            - **APK Bundle:** `${{ needs.verify-and-build.outputs.app_name }}-${{ needs.verify-and-build.outputs.version }}-build${{ needs.verify-and-build.outputs.build_number }}.aab`
+            - **Debug Symbols:** `debug-symbols-${{ needs.verify-and-build.outputs.version }}.zip`
+            
+            ### ✅ Quality Gates Passed
+            - Static Analysis (flutter analyze)
+            - Unit Tests (flutter test)
+            - Code Generation (build_runner)
           files: |
             *.aab
             *.zip
           draft: true
+          make_latest: true
           generate_release_notes: true
+          fail_on_unmatched_files: true
