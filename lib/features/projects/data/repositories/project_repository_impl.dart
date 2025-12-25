@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:dartz/dartz.dart';
-import 'package:isar/isar.dart';
+
 import '../../../../core/error/failures.dart';
 import '../../../../features/diagram/domain/entities/electrical_node.dart';
 import '../../../../features/diagram/data/models/electrical_node_dto.dart';
@@ -9,16 +9,17 @@ import '../../domain/repositories/project_repository.dart';
 import '../models/project_model.dart';
 import '../../domain/entities/budget_config.dart';
 
-class ProjectRepositoryImpl implements ProjectRepository {
-  final Isar _isar;
+import 'package:electrician_app/features/projects/data/datasources/project_local_data_source.dart';
 
-  ProjectRepositoryImpl(this._isar);
+class ProjectRepositoryImpl implements ProjectRepository {
+  final ProjectLocalDataSource _dataSource;
+
+  ProjectRepositoryImpl(this._dataSource);
 
   @override
   Future<Either<Failure, List<Project>>> getProjects() async {
     try {
-      final models =
-          await _isar.projectModels.where().sortByNameDesc().findAll();
+      final models = await _dataSource.getProjects();
       final projects = models.map((model) => _mapToEntity(model)).toList();
       return Right(projects);
     } catch (e) {
@@ -28,30 +29,21 @@ class ProjectRepositoryImpl implements ProjectRepository {
 
   @override
   Stream<List<Project>> getProjectsStream() {
-    return _isar.projectModels
-        .where()
-        .sortByNameDesc()
-        .watch(fireImmediately: true)
-        .map(
+    return _dataSource.getProjectsStream().map(
           (models) => models.map((m) => _mapToEntity(m)).toList(),
         );
   }
 
   @override
   Future<bool> isProjectNameTaken(String name) async {
-    final count = await _isar.projectModels.filter().nameEqualTo(name).count();
-    return count > 0;
+    return _dataSource.isProjectNameTaken(name);
   }
 
   @override
   Future<Either<Failure, int>> saveProject(Project project) async {
     try {
       final model = _mapToModel(project);
-
-      late int id;
-      await _isar.writeTxn(() async {
-        id = await _isar.projectModels.put(model);
-      });
+      final id = await _dataSource.saveProject(model);
       return Right(id);
     } catch (e) {
       return Left(CacheFailure("Failed to save project: $e"));
@@ -61,9 +53,7 @@ class ProjectRepositoryImpl implements ProjectRepository {
   @override
   Future<Either<Failure, void>> deleteProject(int id) async {
     try {
-      await _isar.writeTxn(() async {
-        await _isar.projectModels.delete(id);
-      });
+      await _dataSource.deleteProject(id);
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure("Failed to delete project: $e"));

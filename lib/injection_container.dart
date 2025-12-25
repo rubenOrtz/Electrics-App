@@ -7,7 +7,10 @@ import 'features/projects/data/models/project_model.dart';
 import 'package:electrician_app/features/projects/domain/repositories/project_repository.dart';
 import 'package:electrician_app/features/projects/data/repositories/project_repository_impl.dart';
 
+import 'features/projects/data/datasources/project_local_data_source.dart';
+
 import 'features/settings/data/models/app_settings_model.dart';
+
 import 'features/settings/data/models/user_profile_model.dart';
 import 'features/settings/domain/repositories/settings_repository.dart';
 import 'features/settings/data/repositories/settings_repository_impl.dart';
@@ -61,6 +64,8 @@ Future<void> initializeDependencies() async {
   }
 
   // Repositories
+  sl.registerSingleton<ProjectLocalDataSource>(
+      ProjectLocalDataSourceImpl(sl()));
   sl.registerSingleton<ProjectRepository>(ProjectRepositoryImpl(sl()));
   sl.registerSingleton<SettingsRepository>(SettingsRepositoryImpl(sl()));
   sl.registerSingleton<UserProfileRepository>(UserProfileRepositoryImpl(sl()));
