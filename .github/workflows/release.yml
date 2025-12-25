@@ -142,17 +142,23 @@ jobs:
       - name: 🔐 Configure Android Signing
         if: github.event_name == 'workflow_dispatch'
         run: |
+          # Create the directory if it doesn't exist
+          mkdir -p android/app
+          
+          # Decode the keystore directly into the android/app folder
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
           
+          # IMPORTANT: storeFile should just be the filename 
+          # because Gradle 'file()' call in app/build.gradle is relative to the app folder
           cat > android/key.properties << EOF
           storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
           keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
-          storeFile=app/upload-keystore.jks
+          storeFile=upload-keystore.jks
           EOF
           
-          echo "✅ Keystore: android/app/upload-keystore.jks"
-          echo "✅ Properties: android/key.properties"
+          echo "✅ Keystore created at: android/app/upload-keystore.jks"
+          echo "✅ key.properties configured with storeFile=upload-keystore.jks"
 
       - name: 🏗️ Build Production AAB (Signed)
         if: github.event_name == 'workflow_dispatch'
