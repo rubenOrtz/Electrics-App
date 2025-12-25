@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Versión a crear (ej: v1.0.0)'
+        description: 'Versión Semántica (ej: v1.0.0)'
         required: true
         default: 'v1.0.0'
 
@@ -12,22 +12,26 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    name: 🤖 Build & Attach to Draft
+  # -----------------------------------------------------------------
+  # JOB 1: INTEGRACIÓN CONTINUA (Build & Verify)
+  # Este trabajo NO modifica el repo. Es seguro. Si falla, no pasa nada.
+  # -----------------------------------------------------------------
+  build-android:
+    name: 🏗️ Build & Verify
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: 🏷️ Create & Push Tag
+      # 🛡️ VALIDACIÓN DE SEGURIDAD
+      # Evita tags basura como "v1" o "test". Obliga a formato vX.X.X
+      - name: 🛡️ Validate SemVer
         run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git tag ${{ inputs.version }}
-          git push origin ${{ inputs.version }}
-        continue-on-error: true 
+          if [[ ! "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "❌ Error: La versión '${{ inputs.version }}' no cumple el formato vX.Y.Z"
+            exit 1
+          fi
+          echo "✅ Versión válida: ${{ inputs.version }}"
 
       - name: ☕ Setup Java
         uses: actions/setup-java@v4
@@ -63,13 +67,42 @@ jobs:
       - name: 🏗️ Build APK (Obfuscated)
         run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
 
-      - name: 🏷️ Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk Electrics-App-${{ inputs.version }}.apk
+      # Guardamos el APK como artefacto temporal. Si el release falla, el APK sigue aquí.
+      - name: 📤 Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
+          retention-days: 1
 
-      - name: 🚀 Update Draft Release
+  # -----------------------------------------------------------------
+  # JOB 2: DESPLIEGUE CONTINUO (Release & Tag)
+  # Solo se ejecuta si el Job 1 fue exitoso (needs: build-android).
+  # -----------------------------------------------------------------
+  release:
+    name: 📦 Tag & Draft Release
+    needs: [build-android] # ¡La clave de la seguridad!
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: 📥 Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-release
+
+      - name: 🏷️ Rename APK
+        run: mv app-release.apk Electrics-App-${{ inputs.version }}.apk
+
+      # Esta acción crea el Tag Y la Release al mismo tiempo.
+      # Si algo falla aquí, no hemos ensuciado el repo manualmente antes.
+      - name: 🎉 Create Release & Tag
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ inputs.version }}
+          name: "Release ${{ inputs.version }}"
           files: Electrics-App-${{ inputs.version }}.apk
-          draft: true  
+          draft: true       
           prerelease: false 
+          generate_release_notes: true 
