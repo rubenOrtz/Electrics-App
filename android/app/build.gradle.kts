@@ -13,9 +13,14 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+// Variable auxiliar para verificar si tenemos los datos de firma
+val hasSigningInfo = keystoreProperties.containsKey("keyAlias") &&
+                     keystoreProperties.containsKey("keyPassword") &&
+                     keystoreProperties.containsKey("storeFile") &&
+                     keystoreProperties.containsKey("storePassword")
+
 android {
     namespace = "com.example.electrician_app"
-    
     compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
@@ -31,29 +36,36 @@ android {
     defaultConfig {
         applicationId = "com.example.electrician_app"
         minSdk = flutter.minSdkVersion
-        
         targetSdk = 36
-        
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String?
-            keyPassword = keystoreProperties["keyPassword"] as String?
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as String?
+        // Solo configuramos "release" si existen las propiedades
+        if (hasSigningInfo) {
+            create("release") {
+                keyAlias = keystoreProperties["keyAlias"] as String
+                keyPassword = keystoreProperties["keyPassword"] as String
+                storeFile = file(keystoreProperties["storeFile"] as String)
+                storePassword = keystoreProperties["storePassword"] as String
+            }
         }
     }
 
     buildTypes {
         getByName("release") {
-            signingConfig = signingConfigs.getByName("release")
+            // CAMBIO CLAVE: Solo asigna la firma si tenemos la info
+            // De lo contrario, usará la firma de debug por defecto (o ninguna)
+            if (hasSigningInfo) {
+                signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+                println("⚠️ Warning: key.properties not found. Building with debug signing config.")
+            }
             
             isMinifyEnabled = true
             isShrinkResources = true
-            
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
