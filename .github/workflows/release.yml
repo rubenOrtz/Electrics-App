@@ -13,38 +13,51 @@ permissions:
 
 jobs:
   # -----------------------------------------------------------------
-  # JOB 1: CI - QUALITY GATES, BUILD & VERIFY
+  # JOB 1: CI - QUALITY GATES, SECURITY & BUILD
   # -----------------------------------------------------------------
   build-android:
-    name: 🛡️ Quality Gate & Build
+    name: 🛡️ Verify & Build
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      # 1. VALIDACIÓN DE INPUT (SemVer)
-      - name: 👮 Validate SemVer
+      # 1. VALIDACIÓN SEMÁNTICA (Versión + Build Number)
+      # El Tech Lead pidió vigilar el Build Number. Este regex acepta v1.0.0 y v1.0.0+1
+      - name: 👮 Validate Version Format
         run: |
-          if [[ ! "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "❌ Error: La versión '${{ inputs.version }}' no cumple el formato vX.Y.Z"
+          if [[ ! "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?$ ]]; then
+            echo "❌ Error: La versión '${{ inputs.version }}' no cumple el formato vX.Y.Z o vX.Y.Z+N"
             exit 1
           fi
           echo "✅ Formato válido."
 
-      # 2. VALIDACIÓN DE COHERENCIA (Pubspec vs Input)
-      # Mejorado con Regex anclado (^) para evitar falsos positivos en comentarios
-      - name: 🔍 Verify Pubspec Integrity
+      # 2. EXTRACCIÓN DINÁMICA DE METADATOS (Single Source of Truth)
+      # Extraemos Nombre y Versión del pubspec.yaml para no hardcodear nada.
+      - name: 🧠 Extract Metadata
+        id: metadata
         run: |
-          # Busca la línea que EMPIEZA por version:
-          PUBSPEC_VER=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | cut -d '+' -f 1 | xargs)
-          INPUT_CLEAN=${{ inputs.version }}
-          INPUT_CLEAN=${INPUT_CLEAN#v}
+          # Extraer nombre de la app
+          APP_NAME=$(grep '^name:' pubspec.yaml | sed 's/name: //g' | xargs)
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+          
+          # Extraer versión limpia del pubspec
+          PUBSPEC_FULL=$(grep '^version:' pubspec.yaml | sed 's/version: //g' | xargs)
+          echo "PUBSPEC_VERSION=$PUBSPEC_FULL" >> $GITHUB_ENV
+          
+          echo "✅ Detectado: $APP_NAME ($PUBSPEC_FULL)"
 
-          if [ "$PUBSPEC_VER" != "$INPUT_CLEAN" ]; then
+      # 3. VERIFICACIÓN DE INTEGRIDAD (Pubspec vs Input)
+      - name: 🔍 Verify Consistency
+        run: |
+          INPUT_CLEAN=${{ inputs.version }}
+          INPUT_CLEAN=${INPUT_CLEAN#v} # Quitar la 'v'
+
+          if [ "$PUBSPEC_VERSION" != "$INPUT_CLEAN" ]; then
             echo "⛔ CRITICAL MISMATCH:"
             echo "   - Input Tag: $INPUT_CLEAN"
-            echo "   - Pubspec:   $PUBSPEC_VER"
-            echo ">> Actualiza el pubspec.yaml antes de lanzar la release."
+            echo "   - Pubspec:   $PUBSPEC_VERSION"
+            echo ">> Actualiza el pubspec.yaml (incluyendo build number) antes de lanzar."
             exit 1
           fi
           echo "✅ Coherencia verificada."
@@ -55,38 +68,52 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      # 3. CACHÉ INTELIGENTE (Mejora de rendimiento)
       - name: 🐦 Setup Flutter (with Cache)
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          cache: true # ¡Nuevo! Acelera el workflow
+          cache: true
 
       - name: 📦 Install Dependencies
         run: flutter pub get
 
-      # 4. QUALITY GATES (¡Lo que pedía el Tech Lead!)
-      # Si esto falla, NO se genera el APK. Seguridad ante todo.
-      - name: 🕵️ Static Analysis (Linter)
-        run: flutter analyze
+      # 4. QUALITY GATES ESTRICTOS
+      # --fatal-infos asegura que no hay deuda técnica oculta.
+      - name: 🕵️ Strict Static Analysis
+        run: flutter analyze --fatal-infos --fatal-warnings
 
       - name: 🧪 Unit Tests
         run: flutter test
 
-      - name: 🔐 Decode Keystore
+      # 5. GESTIÓN DE SECRETOS (Clean Architecture)
+      # Creamos un archivo env.json al vuelo con los secretos para inyectarlos.
+      - name: 🔐 Create Environment Config
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          echo "{" > env.json
+          echo "  \"API_KEY\": \"${{ secrets.API_KEY }}\"," >> env.json
+          echo "  \"BASE_URL\": \"${{ secrets.BASE_URL }}\"" >> env.json
+          echo "}" >> env.json
+          # Nota: Asegúrate de tener estos secrets en GitHub o el JSON quedará vacío/inválido.
 
-      - name: 🔑 Create key.properties
+      # 6. KEYSTORE ROBUSTO (Rutas Absolutas)
+      # Usamos $PWD para evitar errores de ruta relativa entre Gradle y Shell.
+      - name: 🔐 Setup Keystore
         run: |
+          # Decodificar en la raíz de android/ para simplicidad
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
+          
+          # Crear key.properties usando ruta absoluta al archivo .jks
           echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" > android/key.properties
           echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
           echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
-          echo "storeFile=upload-keystore.jks" >> android/key.properties
+          echo "storeFile=$PWD/android/upload-keystore.jks" >> android/key.properties
 
+      # 7. BUILD PRODUCTION (Con inyección de entorno)
       - name: 🏗️ Build APK (Production)
-        # Nota: Si usas variables de entorno (API Keys), añade --dart-define aquí
-        run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
+        run: |
+          flutter build apk --release \
+            --obfuscate --split-debug-info=build/app/outputs/symbols \
+            --dart-define-from-file=env.json
 
       - name: 🤐 Zip Debug Symbols
         run: |
@@ -94,53 +121,45 @@ jobs:
           zip -r debug-symbols.zip .
           cd -
 
-      # 5. SUBIDA DE ARTEFACTOS v4
-      - name: 📤 Upload APK Artifact
+      - name: 📤 Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-release
-          path: build/app/outputs/flutter-apk/app-release.apk
-          retention-days: 1
-
-      - name: 📤 Upload Symbols Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-symbols
-          path: build/app/outputs/symbols/debug-symbols.zip
+          name: build-artifacts
+          path: |
+            build/app/outputs/flutter-apk/app-release.apk
+            build/app/outputs/symbols/debug-symbols.zip
           retention-days: 1
 
   # -----------------------------------------------------------------
-  # JOB 2: CD - RELEASE & DEPLOY
+  # JOB 2: CD - RELEASE & TAGGING
   # -----------------------------------------------------------------
   release:
-    name: 📦 Publish Draft Release
+    name: 📦 Publish Release
     needs: [build-android]
     runs-on: ubuntu-latest
     steps:
-      - name: 📥 Checkout Repository (Full History)
+      - name: 📥 Checkout (Full History)
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Necesario para generar notas de release
+          fetch-depth: 0 
 
-      # 6. DESCARGA CORREGIDA (v4 crea carpetas)
-      - name: 📥 Download APK
-        uses: actions/download-artifact@v4
-        with:
-          name: app-release
-          path: apk_folder # Descargamos en una carpeta explícita
-
-      - name: 📥 Download Symbols
-        uses: actions/download-artifact@v4
-        with:
-          name: debug-symbols
-          path: symbols_folder
-
-      # 7. RENOMBRADO SEGURO (Manejando rutas v4)
-      - name: 🏷️ Prepare Release Files
+      # Recuperamos el nombre de la app para el renombrado
+      - name: 🧠 Extract App Name
         run: |
-          # Movemos desde las carpetas descargadas
-          mv apk_folder/app-release.apk Electrics-App-${{ inputs.version }}.apk
-          mv symbols_folder/debug-symbols.zip debug-symbols-${{ inputs.version }}.zip
+          APP_NAME=$(grep '^name:' pubspec.yaml | sed 's/name: //g' | xargs)
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
+
+      - name: 📥 Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: build-artifacts
+          path: artifacts
+
+      - name: 🏷️ Rename & Prepare
+        run: |
+          # Usamos el nombre real de la app y la versión del input
+          mv artifacts/app-release.apk ${APP_NAME}-${{ inputs.version }}.apk
+          mv artifacts/debug-symbols.zip debug-symbols-${{ inputs.version }}.zip
 
       - name: 🎉 Create Release & Tag
         uses: softprops/action-gh-release@v2
@@ -148,7 +167,7 @@ jobs:
           tag_name: ${{ inputs.version }}
           name: "Release ${{ inputs.version }}"
           files: |
-            Electrics-App-${{ inputs.version }}.apk
+            ${APP_NAME}-${{ inputs.version }}.apk
             debug-symbols-${{ inputs.version }}.zip
           draft: true
           prerelease: false
