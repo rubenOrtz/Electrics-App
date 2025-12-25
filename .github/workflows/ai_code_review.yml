@@ -1,0 +1,35 @@
+name: 🤖 AI Code Reviewer
+
+on:
+  pull_request:
+    types: [opened, synchronize] # Se ejecuta al abrir y al actualizar la PR
+
+permissions:
+  contents: read
+  pull-requests: write # Necesario para comentar en la PR
+  issues: write
+
+jobs:
+  ai-review:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Importante para poder hacer git diff
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: 📦 Install Dependencies
+        run: |
+          pip install google-genai PyGithub
+
+      - name: ⚡ Run Gemini Reviewer
+        env:
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: python scripts/ai_pr_reviewer.py
