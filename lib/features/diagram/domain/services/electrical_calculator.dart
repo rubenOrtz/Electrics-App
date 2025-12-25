@@ -3,12 +3,14 @@ import '../entities/electrical_node.dart';
 import '../entities/calculation_result.dart';
 import '../entities/cable_physics.dart';
 import '../entities/validation_status.dart';
-import '../entities/conductor_attributes.dart'; // Maybe needed
-import '../entities/electrical_enums.dart'; // CRITICAL: ConductorMaterial
+import '../entities/conductor_attributes.dart';
+import 'package:electrician_app/features/diagram/domain/entities/electrical_enums.dart'
+    as enums;
 import 'validation_engine.dart';
+import 'iz_constants.dart';
 import '../../../../core/constants/electrical_constants.dart';
 
-/// Motor de cálculo eléctrico con propagación bidireccional
+/// Motor de álculo eléctrico con propagación bidireccional
 class ElectricalCalculator {
   /// Calcula todo el árbol de forma bidireccional
   /// Retorna el árbol actualizado con resultados
@@ -27,7 +29,6 @@ class ElectricalCalculator {
       load: (_) => 230.0,
     );
 
-    // BUG 2 FIX: Calcular impedancia inicial de la fuente
     // Z_source = V / Icc_external (evita explosión de Icc aguas abajo)
     double initialR =
         0.015; // Valor por defecto seguro (~15mΩ) para evitar Icc infinita
@@ -35,11 +36,10 @@ class ElectricalCalculator {
 
     root.map(
       source: (n) {
-        // HEURÍSTICA DE UNIDADES: Detectar si viene en Amperios o kA
+        // Detectar si viene en Amperios o kA
         // El default en freezed es 10000 (probablemente Amperios).
         // Si el valor es > 200, asumimos Amperios. Si es <= 200, asumimos kA.
         double val = n.shortCircuitCapacity;
-        // CHANGE: Default bajado a 4.5kA (Valor seguro para vivienda).
         // 4500A * 1.1 (factor seguridad) = 4950A < 6000A (PDC estándar).
         // Así el primer automático de 6kA sale VERDE.
         if (val <= 0 || val == 10000) val = 4500;
@@ -89,98 +89,208 @@ class ElectricalCalculator {
     }
   }
 
-  /// Calculate Cable Ampacity (Iz) using simplified IEC 60364-5-52 tables
+  /// Calculate Cable Ampacity (Iz) using IEC 60364-5-52 tables and correction factors
   /// Returns the maximum current the cable can safely carry
   static double calculateIz({
     required double sectionMm2,
-    required ConductorMaterial material,
-    String installMethod = "Bajo Tubo (Pared Aislante)",
+    required enums.ConductorMaterial material,
+    required enums.CableInsulation insulation,
+    required enums.InstallationMethod method,
+    required enums.CorrectionFactors factors,
   }) {
-    // Simplified table for common installation methods
-    // Reference: IEC 60364-5-52, method B1 (in conduit on wall)
+    // Alias Z1 to XLPE
+    final effectiveInsulation = (insulation == enums.CableInsulation.z1)
+        ? enums.CableInsulation.xlpe
+        : insulation;
 
-    // Base ampacity for copper in conduit (conservative values)
-    final Map<double, double> copperAmpacity = {
-      1.5: 13.5,
-      2.5: 18.0,
-      4.0: 24.0,
-      6.0: 31.0,
-      10.0: 42.0,
-      16.0: 56.0,
-      25.0: 73.0,
-      35.0: 89.0,
-      50.0: 108.0,
-      70.0: 136.0,
-      95.0: 164.0,
-      120.0: 188.0,
-      150.0: 216.0,
-      185.0: 245.0,
-      240.0: 284.0,
-    };
+    // 1. Base Capacity (Itab)
+    final table = IzConstants.currentCarryingCapacity[effectiveInsulation]
+        ?[material]?[method];
+    if (table == null) return 0.0;
 
-    // Aluminum is ~0.79x copper
-    final baseIz =
-        copperAmpacity[sectionMm2] ?? (sectionMm2 * 2.0); // Rough approximation
+    double iTab = table[sectionMm2] ?? 0.0;
 
-    if (material == ConductorMaterial.aluminum) {
-      return baseIz * 0.79;
+    // Interpolation
+    if (iTab == 0.0 && sectionMm2 > 0) {
+      final sections = table.keys.toList()..sort();
+      if (sectionMm2 < sections.first) return 0.0;
+      if (sectionMm2 > sections.last) return 0.0;
+
+      for (int i = 0; i < sections.length - 1; i++) {
+        final s1 = sections[i];
+        final s2 = sections[i + 1];
+        if (sectionMm2 > s1 && sectionMm2 < s2) {
+          final i1 = table[s1]!;
+          final i2 = table[s2]!;
+          iTab = i1 + (sectionMm2 - s1) * (i2 - i1) / (s2 - s1);
+          break;
+        }
+      }
     }
 
-    return baseIz;
+    // 2. Temperature Correction (Ktemp)
+    final tempTable = method.isBuried
+        ? IzConstants.tempCorrectionTableGround[effectiveInsulation]
+        : IzConstants.tempCorrectionTableAir[effectiveInsulation];
+
+    double kTemp = 1.0;
+    if (tempTable != null) {
+      final temp = factors.ambientTemperature;
+      if (tempTable.containsKey(temp)) {
+        kTemp = tempTable[temp]!;
+      } else {
+        // Nearest/Interp
+        final keys = tempTable.keys.toList()..sort();
+        if (temp <= keys.first)
+          kTemp = tempTable[keys.first]!;
+        else if (temp >= keys.last)
+          kTemp = tempTable[keys.last]!;
+        else {
+          for (int i = 0; i < keys.length - 1; i++) {
+            if (temp > keys[i] && temp < keys[i + 1]) {
+              final t1 = keys[i];
+              final t2 = keys[i + 1];
+              final v1 = tempTable[t1]!;
+              final v2 = tempTable[t2]!;
+              kTemp = v1 + (temp - t1) * (v2 - v1) / (t2 - t1);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    // 3. Grouping Correction (Kgroup)
+    final groupTable = IzConstants.groupingCorrectionTable[method];
+    double kGroup = 1.0;
+    if (groupTable != null) {
+      final n = factors.numberOfCircuits;
+      if (groupTable.containsKey(n)) {
+        kGroup = groupTable[n]!;
+      } else if (n > 1) {
+        final maxKey = groupTable.keys.reduce(max);
+        if (n > maxKey) kGroup = groupTable[maxKey]!;
+      }
+    } else if (factors.numberOfCircuits > 1) {
+      kGroup = 0.8;
+    }
+
+    // 4. Soil Resistivity (Ksoil)
+    double kSoil = 1.0;
+    if (method.isBuried) {
+      final resistivity = factors.soilResistivity;
+      if (IzConstants.soilResistivityTable.containsKey(resistivity)) {
+        kSoil = IzConstants.soilResistivityTable[resistivity]!;
+      } else {
+        final rKeys = IzConstants.soilResistivityTable.keys.toList()..sort();
+        if (resistivity <= rKeys.first)
+          kSoil = IzConstants.soilResistivityTable[rKeys.first]!;
+        else if (resistivity >= rKeys.last)
+          kSoil = IzConstants.soilResistivityTable[rKeys.last]!;
+        else {
+          for (int i = 0; i < rKeys.length - 1; i++) {
+            if (resistivity > rKeys[i] && resistivity < rKeys[i + 1]) {
+              final r1 = rKeys[i];
+              final r2 = rKeys[i + 1];
+              final v1 = IzConstants.soilResistivityTable[r1]!;
+              final v2 = IzConstants.soilResistivityTable[r2]!;
+              kSoil = v1 + (resistivity - r1) * (v2 - v1) / (r2 - r1);
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    return iTab * kTemp * kGroup * kSoil;
   }
 
   /// Calculate precise voltage drop percentage
-  /// Returns ΔU% with full precision (never incorrectly returns 0.00%)
   static double calculateVoltageDrop({
     required double currentAmps,
     required double lengthMeters,
     required double sectionMm2,
-    required ConductorMaterial material,
+    required enums.ConductorMaterial material,
     required double voltage,
     required bool isThreePhase,
   }) {
     if (lengthMeters == 0.0 || currentAmps == 0.0) return 0.0;
-
-    // Resistivity at 20°C in Ω·mm²/m
-    const rhoCu = 0.01724; // Copper
-    const rhoAl = 0.02826; // Aluminum
-
-    final rho = material == ConductorMaterial.copper ? rhoCu : rhoAl;
+    const rhoCu = 0.01724;
+    const rhoAl = 0.02826;
+    final rho = material == enums.ConductorMaterial.copper ? rhoCu : rhoAl;
     final factor = isThreePhase ? sqrt(3) : 2.0;
 
-    // ΔU (volts) = (factor * ρ * L * I) / S
     final dropVolts = (factor * rho * lengthMeters * currentAmps) / sectionMm2;
-
-    // Convert to percentage with full precision
     return (dropVolts / voltage) * 100.0;
   }
 
-  /// Calculate short-circuit current at a point considering cable impedance
-  /// Icc decreases as it travels through the cable
   static double calculateIccAtPoint({
     required double iccUpstream,
     required double lengthMeters,
     required double sectionMm2,
-    required ConductorMaterial material,
+    required enums.ConductorMaterial material,
     required double voltage,
   }) {
     if (lengthMeters == 0.0) return iccUpstream;
-
-    // Calculate cable impedance
     const rhoCu = 0.01724;
     const rhoAl = 0.02826;
-    final rho = material == ConductorMaterial.copper ? rhoCu : rhoAl;
+    final rho = material == enums.ConductorMaterial.copper ? rhoCu : rhoAl;
 
-    // Z_cable = (ρ * 2 * L) / S  (simplified, ignoring reactance)
+    // Simplified Z calculation (Resistive)
     final zCable = (rho * 2 * lengthMeters) / sectionMm2;
-
-    // Z_upstream = V / Icc_upstream
     final zUpstream = voltage / iccUpstream;
+    return voltage / (zUpstream + zCable);
+  }
 
-    // Icc_point = V / (Z_upstream + Z_cable)
-    final iccPoint = voltage / (zUpstream + zCable);
+  // --- SHORT CIRCUIT CALCULATION HELPER ---
+  static _ShortCircuitData _calculateShortCircuit({
+    required double upstreamVoltage,
+    required double accumulatedR,
+    required double accumulatedX,
+    required CablePhysics? cablePhysics,
+    required bool isThreePhase,
+  }) {
+    // If we have a local cable, add its impedance to accumulated
+    double totalR = accumulatedR;
+    double totalX = accumulatedX;
 
-    return iccPoint;
+    if (cablePhysics != null) {
+      totalR += cablePhysics
+          .resistanceAtMaxTemp; // Use max temp for Min Icc? No, typically 20C for Max, Max Temp for Min.
+      // Standard:
+      // Icc Max: Conductors at 20°C (Resistance * 1.0)
+      // Icc Min: Conductors at operating temp (Resistance * 1.25 or 1.5)
+      // For MVP we use accumulatedR which likely comes from 20C + Temp.
+      // Let's assume accumulatedR passed down is "Hot" or "Cold" appropriately?
+      // In TopDown, we added 'cable.resistanceAtMaxTemp'. This is correct for Voltage Drop and Icc Min.
+      // For Icc Max we should technically use resistance at 20°C.
+    }
+
+    // Safety
+    if (totalR < 0.001) totalR = 0.001;
+
+    final Z = sqrt(totalR * totalR + totalX * totalX);
+
+    // Simplified:
+    // Icc Max = 1.00 * 230 / Z
+    // Icc Min = 0.80 * 230 / (1.5 * Z) roughly.
+
+    double iccMax = 0.0;
+    double iccMin = 0.0;
+
+    // Voltage to use: Phase-Neutral (230) usually
+    // If upstreamVoltage is passed effectively.
+    final voltage = upstreamVoltage > 0 ? upstreamVoltage : 230.0;
+
+    iccMax = voltage / Z; // Very simplified
+    iccMin = voltage / (Z * 1.5); // Heuristic for hot cable/fault end
+
+    return _ShortCircuitData(
+      iccMax: iccMax,
+      iccMin: iccMin,
+      newAccumulatedR: totalR,
+      newAccumulatedX: totalX,
+    );
   }
 
   // ===== PASADA 1: BOTTOM-UP (Suma de Cargas) =====
@@ -298,7 +408,7 @@ class ElectricalCalculator {
     double voltage = upstreamVoltage;
     double myR = 0.0;
     double myX = 0.0;
-    double cableIz = 0.0; // Corriente admisible del cable
+    double cableIz = 0.0;
 
     // Calcular caída en Acometida si existe
     if (node.mainFeedCable != null && node.result != null) {
@@ -326,14 +436,14 @@ class ElectricalCalculator {
       voltage = upstreamVoltage - deltaU;
       myR = cable.resistanceAtMaxTemp;
       myX = cable.reactance;
-      cableIz = cable.currentCapacity; // ¡IMPORTANTE! Iz del cable
+      cableIz = cable.currentCapacity;
     }
 
     final sc = _calculateShortCircuit(
       upstreamVoltage: upstreamVoltage,
       accumulatedR: accumulatedR + myR,
       accumulatedX: accumulatedX + myX,
-      cablePhysics: null, // Ya incluido en myR/myX
+      cablePhysics: null,
       isThreePhase: _isThreePhase(node),
     );
 
@@ -382,7 +492,7 @@ class ElectricalCalculator {
     double voltage = upstreamVoltage;
     double myR = 0.0;
     double myX = 0.0;
-    double cableIz = 0.0; // Corriente admisible del cable
+    double cableIz = 0.0;
 
     // 1. Calcular caída de tensión si hay cable
     if (node.inputCable != null && node.result != null) {
@@ -405,7 +515,7 @@ class ElectricalCalculator {
       voltage = upstreamVoltage - deltaU;
       myR = cable.resistanceAtMaxTemp;
       myX = cable.reactance;
-      cableIz = cable.currentCapacity; // Iz del cable
+      cableIz = cable.currentCapacity;
     }
 
     final sc = _calculateShortCircuit(
@@ -428,7 +538,7 @@ class ElectricalCalculator {
       minShortCircuitCurrent: sc.iccMin,
       loopImpedance: sqrt((accumulatedR + myR) * (accumulatedR + myR) +
           (accumulatedX + myX) * (accumulatedX + myX)),
-      admissibleCurrent: cableIz, // Añadido: Iz del cable
+      admissibleCurrent: cableIz,
       status: ValidationStatus.ok,
     );
 
@@ -469,9 +579,9 @@ class ElectricalCalculator {
 
     final sc = _calculateShortCircuit(
       upstreamVoltage: upstreamVoltage,
-      accumulatedR: accumulatedR + myR, // Sumamos resistencia interna
+      accumulatedR: accumulatedR + myR,
       accumulatedX: accumulatedX,
-      cablePhysics: null, // Cable externo ya se manejaría aparte si lo hubiera
+      cablePhysics: null,
       isThreePhase: _isThreePhase(node),
     );
 
@@ -516,7 +626,7 @@ class ElectricalCalculator {
     double voltage = upstreamVoltage;
     double myR = 0.0;
     double myX = 0.0;
-    double cableIz = 0.0; // Corriente admisible del cable
+    double cableIz = 0.0;
 
     if (node.inputCable != null && node.result != null) {
       final cable = _createCablePhysics(node.inputCable!);
@@ -537,7 +647,7 @@ class ElectricalCalculator {
       voltage = upstreamVoltage - deltaU;
       myR = cable.resistanceAtMaxTemp;
       myX = cable.reactance;
-      cableIz = cable.currentCapacity; // Iz del cable
+      cableIz = cable.currentCapacity;
     }
 
     final sc = _calculateShortCircuit(
@@ -560,7 +670,7 @@ class ElectricalCalculator {
       minShortCircuitCurrent: sc.iccMin,
       loopImpedance: sqrt((accumulatedR + myR) * (accumulatedR + myR) +
           (accumulatedX + myX) * (accumulatedX + myX)),
-      admissibleCurrent: cableIz, // Añadido: Iz del cable
+      admissibleCurrent: cableIz,
       status: ValidationStatus.ok,
     );
 
@@ -608,10 +718,18 @@ class ElectricalCalculator {
   }
 
   static CablePhysics _createCablePhysics(ConductorAttributes cable) {
+    final iz = calculateIz(
+      sectionMm2: cable.sectionMm2,
+      material: cable.material,
+      insulation: cable.insulation,
+      method: cable.method,
+      factors: cable.factors,
+    );
+
     return CablePhysics(
       section: cable.sectionMm2,
       length: cable.lengthMeters,
-      baseCurrentCapacity: 0.0, // 0.0 triggers internal estimation
+      baseCurrentCapacity: iz,
     );
   }
 
@@ -688,12 +806,9 @@ _ShortCircuitData _calculateShortCircuit({
   CablePhysics? cablePhysics,
   required bool isThreePhase,
 }) {
-  // 1. Usar impedancias acumuladas directamente
-  // (las impedancias del cable ya están en accumulatedR y accumulatedX)
   double totalR = accumulatedR;
   double totalX = accumulatedX;
 
-  // Si se proporciona cable, agregar su impedancia
   if (cablePhysics != null) {
     totalR += cablePhysics.resistanceAtMaxTemp;
     totalX += cablePhysics.reactance;
