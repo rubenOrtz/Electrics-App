@@ -218,23 +218,26 @@ jobs:
           echo "📦 Artifact contents:"
           ls -lhR artifacts/
           
-          # Verify expected files exist
-          if [[ ! -f "artifacts/app-release.aab" ]]; then
-            echo "⛔ ERROR: app-release.aab not found in artifacts"
+          AAB_PATH="artifacts/app/outputs/bundle/release/app-release.aab"
+          APK_PATH="artifacts/app/outputs/apk/release/app-release.apk"
+          SYMBOLS_PATH="artifacts/debug-symbols"
+
+          if [[ ! -f "$AAB_PATH" ]]; then
+            echo "⛔ ERROR: app-release.aab not found at $AAB_PATH"
             exit 1
           fi
 
-          if [[ ! -f "artifacts/app-release.apk" ]]; then
-            echo "⛔ ERROR: app-release.apk not found in artifacts"
+          if [[ ! -f "$APK_PATH" ]]; then
+            echo "⛔ ERROR: app-release.apk not found at $APK_PATH"
             exit 1
           fi
           
-          if [[ ! -d "artifacts/debug-symbols" ]]; then
-            echo "⛔ ERROR: debug-symbols directory not found in artifacts"
+          if [[ ! -d "$SYMBOLS_PATH" ]]; then
+            echo "⛔ ERROR: debug-symbols directory not found"
             exit 1
           fi
           
-          echo "✅ All required artifacts present"
+          echo "✅ All required artifacts present in subdirectories"
 
       - name: 🏷️ Prepare Release Assets
         env:
@@ -242,23 +245,20 @@ jobs:
           VERSION: ${{ needs.verify-and-build.outputs.version }}
           BUILD: ${{ needs.verify-and-build.outputs.build_number }}
         run: |
-          # 1. Define the source paths based on your log output
+
           APK_SRC="artifacts/app/outputs/apk/release/app-release.apk"
           AAB_SRC="artifacts/app/outputs/bundle/release/app-release.aab"
           SYMBOLS_SRC="artifacts/debug-symbols"
 
-          # 2. Define the new semantic names
           APK_DEST="${APP_NAME}-${VERSION}-build${BUILD}.apk"
           AAB_DEST="${APP_NAME}-${VERSION}-build${BUILD}.aab"
           SYMBOLS_ZIP="debug-symbols-${VERSION}.zip"
 
           echo "🚀 Moving and renaming artifacts..."
 
-          # 3. Move and rename APK & AAB to the root directory
           if [ -f "$APK_SRC" ]; then mv "$APK_SRC" "$APK_DEST"; else echo "❌ APK not found"; exit 1; fi
           if [ -f "$AAB_SRC" ]; then mv "$AAB_SRC" "$AAB_DEST"; else echo "❌ AAB not found"; exit 1; fi
           
-          # 4. Zip the debug symbols from their subfolder
           if [ -d "$SYMBOLS_SRC" ]; then
             cd "$SYMBOLS_SRC"
             zip -r "../../$SYMBOLS_ZIP" .
@@ -267,7 +267,6 @@ jobs:
             echo "❌ Debug symbols folder not found"; exit 1
           fi
 
-          # 5. Final Verification
           ls -lh "$APK_DEST" "$AAB_DEST" "$SYMBOLS_ZIP"
           echo "✅ Assets prepared for release"
 
