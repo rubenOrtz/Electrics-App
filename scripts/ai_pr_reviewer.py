@@ -25,13 +25,68 @@ def get_diff():
         print(f"⚠️ Error obteniendo git diff: {e}")
         return None
 
-def analyze_code_with_gemini(diff_content):
-    """Envía el diff a Gemini para auditoría."""
+def get_pr_comments():
+    """Obtiene los comentarios existentes de la PR para contexto."""
+    if not GITHUB_TOKEN or not REPO_NAME or not PR_NUMBER:
+        return None
+    
+    try:
+        g = Github(GITHUB_TOKEN)
+        repo = g.get_repo(REPO_NAME)
+        pr = repo.get_pull(int(PR_NUMBER))
+        
+        # Obtener comentarios generales de la PR
+        comments = pr.get_issue_comments()
+        
+        # Obtener comentarios de revisión de código (line-level)
+        review_comments = pr.get_review_comments()
+        
+        formatted_comments = []
+        
+        # Comentarios generales
+        for comment in comments:
+            # Evitar incluir comentarios previos del bot
+            if not comment.body.startswith("## 🤖 Gemini Code Review"):
+                formatted_comments.append(f"""
+**User Comment** (by {comment.user.login} on {comment.created_at}):
+{comment.body}
+""")
+        
+        # Comentarios de revisión en líneas específicas
+        for comment in review_comments:
+            formatted_comments.append(f"""
+**Code Review Comment** (by {comment.user.login} on line {comment.position} in {comment.path}):
+{comment.body}
+""")
+        
+        if formatted_comments:
+            return "\n---\n".join(formatted_comments)
+        return None
+        
+    except Exception as e:
+        print(f"⚠️ Error obteniendo comentarios de PR: {e}")
+        return None
+
+def analyze_code_with_gemini(diff_content, pr_comments=None):
+    """Envía el diff y comentarios a Gemini para auditoría."""
     client = genai.Client(api_key=API_KEY)
     
     # Limitamos el diff para no reventar el token limit (aunque Flash aguanta mucho)
     if len(diff_content) > 100000:
         diff_content = diff_content[:100000] + "\n...[TRUNCATED]"
+
+    # Construir sección de comentarios si existen
+    comments_section = ""
+    if pr_comments:
+        comments_section = f"""
+    
+    EXISTING PR COMMENTS (User Feedback):
+    The following comments were made by users on this PR. Take them into account when reviewing:
+    
+    {pr_comments}
+    
+    ---
+    """
 
     prompt = f"""
     ACT AS: Senior Flutter & Clean Architecture Tech Lead.
@@ -43,7 +98,8 @@ def analyze_code_with_gemini(diff_content):
     3. Look for "Fake implementations" (e.g. hardcoded maps instead of real logic).
     4. Be harsh but constructive.
     5. Output format: Markdown. Use emojis.
-    
+    {f'6. **IMPORTANT**: Address or acknowledge the user comments provided below.' if pr_comments else ''}
+    {comments_section}
     GIT DIFF:
     ```diff
     {diff_content}
@@ -88,8 +144,13 @@ def main():
         print("🤷‍♂️ No hay cambios detectables para revisar.")
         sys.exit(0)
 
+    print("💬 Obteniendo comentarios de la PR...")
+    pr_comments = get_pr_comments()
+    if pr_comments:
+        print(f"✅ Se encontraron comentarios de usuarios para contexto.")
+    
     print("🧠 Analizando con Gemini...")
-    report = analyze_code_with_gemini(diff)
+    report = analyze_code_with_gemini(diff, pr_comments)
     
     print("📢 Publicando resultados...")
     post_comment_on_pr(report)
