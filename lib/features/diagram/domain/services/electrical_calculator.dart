@@ -789,54 +789,6 @@ class _ShortCircuitData {
   });
 }
 
-/// Calcula corrientes de cortocircuito considerando impedancia del cable
-///
-/// Usa el método de impedancias (R + jX) para cálculo preciso según IEC 60909
-/// Parámetros:
-/// - [upstreamVoltage]: Tensión aguas arriba (V)
-/// - [accumulatedR]: Resistencia acumulada hasta este punto (Ω)
-/// - [accumulatedX]: Reactancia acumulada hasta este punto (Ω)
-/// - [cablePhysics]: Características físicas del cable (puede ser null)
-/// - [cableLength]: Longitud del cable en metros
-/// - [isThreePhase]: true para cálculo trifásico, false para monofásico
-_ShortCircuitData _calculateShortCircuit({
-  required double upstreamVoltage,
-  required double accumulatedR,
-  required double accumulatedX,
-  CablePhysics? cablePhysics,
-  required bool isThreePhase,
-}) {
-  double totalR = accumulatedR;
-  double totalX = accumulatedX;
-
-  if (cablePhysics != null) {
-    totalR += cablePhysics.resistanceAtMaxTemp;
-    totalX += cablePhysics.reactance;
-  }
-
-  // 2. Calcular impedancia total
-  final impedanceTotal = sqrt(totalR * totalR + totalX * totalX);
-
-  // Evitar división por cero
-  final safeImpedance = max(impedanceTotal, 0.001);
-
-  // 3. Calcular IccMax (factor de tensión 1.1 según IEC 60909)
-  final voltageMax = upstreamVoltage * 1.1;
-  final iccMax = isThreePhase
-      ? (voltageMax / (sqrt(3) * safeImpedance))
-      : (voltageMax / safeImpedance);
-
-  // 4. Calcular IccMin (factor conservador 0.8)
-  final iccMin = iccMax * 0.8;
-
-  return _ShortCircuitData(
-    iccMax: iccMax,
-    iccMin: iccMin,
-    newAccumulatedR: totalR,
-    newAccumulatedX: totalX,
-  );
-}
-
 class _BottomUpResult {
   final double designCurrent;
   final double activePower;
