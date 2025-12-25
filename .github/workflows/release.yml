@@ -2,82 +2,66 @@ name: 🚀 Production Release
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Versión Semántica (ej: v1.0.0)'
-        required: true
-        default: 'v1.0.0'
 
 permissions:
   contents: write
 
 jobs:
   # -----------------------------------------------------------------
-  # JOB 1: BUILD, QUALITY & METADATA EXTRACTION
+  # JOB 1: BUILD, VERIFY & ARTIFACTS
   # -----------------------------------------------------------------
   build-android:
-    name: 🛡️ Build & Verify
+    name: 🛡️ Build & Quality Gate
     runs-on: ubuntu-latest
-    # Definimos las salidas para pasarlas al siguiente job (DRY Principle)
     outputs:
       app_name: ${{ steps.metadata.outputs.APP_NAME }}
-      pubspec_version: ${{ steps.metadata.outputs.PUBSPEC_VERSION }}
+      version: ${{ steps.metadata.outputs.VERSION }}
+      build_number: ${{ steps.metadata.outputs.BUILD_NUMBER }}
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necesario para comprobar tags existentes
 
-      # 1. VALIDACIÓN SEMÁNTICA DEL INPUT
-      - name: 👮 Validate Version Format
+      # 1. INSTALACIÓN DE HERRAMIENTAS (Stability)
+      - name: 🛠️ Install yq
         run: |
-          if [[ ! "${{ inputs.version }}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(\+[0-9]+)?$ ]]; then
-            echo "❌ Error: La versión '${{ inputs.version }}' no cumple el formato vX.Y.Z o vX.Y.Z+N"
-            exit 1
-          fi
-          echo "✅ Formato de input válido."
+          sudo wget -qO /usr/bin/yq https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/bin/yq
 
-      # 2. EXTRACCIÓN DE METADATA (Source of Truth)
-      - name: 🧠 Extract Metadata (yq)
+      # 2. SINGLE SOURCE OF TRUTH (Pubspec.yaml)
+      - name: 🧠 Extract Metadata
         id: metadata
         run: |
-          # Extraer valores usando yq (preinstalado en runners ubuntu-latest)
+          # Extraemos nombre y versión completa (ej: 1.0.0+1)
           APP_NAME=$(yq '.name' pubspec.yaml)
-          PUBSPEC_FULL=$(yq '.version' pubspec.yaml)
+          VERSION_FULL=$(yq '.version' pubspec.yaml)
           
-          # Output para variables de entorno de este paso
-          echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
-          echo "PUBSPEC_VERSION=$PUBSPEC_FULL" >> $GITHUB_ENV
+          # Separamos semver (1.0.0) y build number (1)
+          VERSION_BASE=$(echo $VERSION_FULL | cut -d '+' -f 1)
+          BUILD_NUMBER=$(echo $VERSION_FULL | cut -d '+' -f 2)
           
-          # Output para exportar al siguiente JOB
+          # Formateamos el Tag (v1.0.0)
+          TAG_NAME="v$VERSION_BASE"
+
+          echo "✅ Detectado: $APP_NAME ($VERSION_FULL) -> Tag: $TAG_NAME"
+
+          # Exportamos outputs
           echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
-          echo "PUBSPEC_VERSION=$PUBSPEC_FULL" >> $GITHUB_OUTPUT
-          
-          echo "✅ Detectado: $APP_NAME ($PUBSPEC_FULL)"
+          echo "VERSION=$TAG_NAME" >> $GITHUB_OUTPUT
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
-      # 3. VERIFICACIÓN INTELIGENTE (Smart Matching)
-      - name: 🔍 Verify Consistency
+      # 3. IDEMPOTENCIA (Evitar sobrescribir releases)
+      - name: 🛑 Check if Tag Exists
+        env:
+          TAG: ${{ steps.metadata.outputs.VERSION }}
         run: |
-          INPUT_CLEAN=${{ inputs.version }}
-          INPUT_CLEAN=${INPUT_CLEAN#v} # Quitar la 'v'
-
-          # Lógica: Si el input tiene '+', comparación exacta. Si no, comparamos base.
-          if [[ "$INPUT_CLEAN" == *"+"* ]]; then
-             if [ "$PUBSPEC_VERSION" != "$INPUT_CLEAN" ]; then
-                echo "⛔ CRITICAL MISMATCH (Exact):"
-                echo "   - Input:   $INPUT_CLEAN"
-                echo "   - Pubspec: $PUBSPEC_VERSION"
-                exit 1
-             fi
-          else
-             # Extraer base del pubspec (1.0.0+1 -> 1.0.0)
-             PUBSPEC_BASE=$(echo $PUBSPEC_VERSION | cut -d '+' -f 1)
-             if [ "$PUBSPEC_BASE" != "$INPUT_CLEAN" ]; then
-                echo "⛔ CRITICAL MISMATCH (Base):"
-                echo "   - Input:   $INPUT_CLEAN"
-                echo "   - Pubspec: $PUBSPEC_BASE (Full: $PUBSPEC_VERSION)"
-                exit 1
-             fi
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "⛔ ERROR: El tag '$TAG' ya existe en el repositorio."
+            echo ">> Solución: Incrementa la versión en pubspec.yaml antes de lanzar la release."
+            exit 1
           fi
-          echo "✅ Coherencia verificada."
+          echo "✅ El tag '$TAG' está disponible."
 
       - name: ☕ Setup Java
         uses: actions/setup-java@v4
@@ -85,22 +69,32 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: 🐦 Setup Flutter (with Cache)
+      - name: 🐦 Setup Flutter (Clean Environment)
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
+      - name: 🧹 Flutter Clean
+        run: flutter clean
+
       - name: 📦 Install Dependencies
         run: flutter pub get
 
-      # 4. CONFIGURACIÓN SEGURA (JSON Injection Proof)
-      - name: 🔐 Generate Secure Config
+      # 4. INYECCIÓN DINÁMICA DE CONFIGURACIÓN (Senior Level)
+      # Cualquier variable definida en 'env' que empiece por APP_CFG_ se inyectará.
+      - name: 🔐 Generate Config (Dynamic)
         env:
-          API_KEY: ${{ secrets.API_KEY }}
-          BASE_URL: ${{ secrets.BASE_URL }}
+          # Mapea tus secretos aquí con el prefijo APP_CFG_
+          APP_CFG_API_KEY: ${{ secrets.API_KEY }}
+          APP_CFG_BASE_URL: ${{ secrets.BASE_URL }}
         run: |
-          python3 -c "import json, os; print(json.dumps({'API_KEY': os.environ['API_KEY'], 'BASE_URL': os.environ['BASE_URL']}))" > env.json
+          python3 -c "
+          import json, os
+          # Filtra variables que empiezan por APP_CFG_ y les quita el prefijo para el JSON final
+          config = {k.replace('APP_CFG_', ''): v for k, v in os.environ.items() if k.startswith('APP_CFG_')}
+          print(json.dumps(config))
+          " > env.json
 
       - name: 🕵️ Strict Static Analysis
         run: flutter analyze --fatal-infos --fatal-warnings
@@ -108,14 +102,18 @@ jobs:
       - name: 🧪 Unit Tests
         run: flutter test
 
+      # 5. KEYSTORE STANDARD LOCATION
+      # Decodificamos DIRECTAMENTE en android/app/
       - name: 🔐 Setup Keystore
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/upload-keystore.jks
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          
+          # Referencia estándar (Gradle suele buscar en el módulo app por defecto)
           echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" > android/key.properties
           echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
           echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
-          # Ruta absoluta robusta
-          echo "storeFile=$PWD/android/upload-keystore.jks" >> android/key.properties
+          # Ruta relativa estándar desde el archivo build.gradle de app/
+          echo "storeFile=upload-keystore.jks" >> android/key.properties
 
       - name: 🏗️ Build APK (Production)
         run: |
@@ -129,50 +127,51 @@ jobs:
           zip -r debug-symbols.zip .
           cd -
 
+      # 6. ARTIFACTS OPTIMIZADOS (Un solo zip si es posible, o paths claros)
       - name: 📤 Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: build-artifacts
+          name: release-build
           path: |
             build/app/outputs/flutter-apk/app-release.apk
             build/app/outputs/symbols/debug-symbols.zip
           retention-days: 1
 
   # -----------------------------------------------------------------
-  # JOB 2: RELEASE & PUBLISH (Uses Metadata from Job 1)
+  # JOB 2: RELEASE (Automated Tagging)
   # -----------------------------------------------------------------
   release:
-    name: 📦 Publish Release
+    name: 📦 Ship It!
     needs: [build-android]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Crucial para crear tags y releases
     steps:
-      - name: 📥 Checkout (Full History)
+      - name: 📥 Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 
 
       - name: 📥 Download Artifacts
         uses: actions/download-artifact@v4
         with:
-          name: build-artifacts
+          name: release-build
           path: artifacts
 
-      - name: 🏷️ Rename Artifacts
+      - name: 🏷️ Rename & Prepare
         env:
           APP_NAME: ${{ needs.build-android.outputs.app_name }}
-          VERSION: ${{ inputs.version }}
+          VERSION: ${{ needs.build-android.outputs.version }}
         run: |
           mv artifacts/app-release.apk ${APP_NAME}-${VERSION}.apk
           mv artifacts/debug-symbols.zip debug-symbols-${VERSION}.zip
 
-      - name: 🎉 Create Release & Tag
+      - name: 🎉 Publish Release & Tag
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ inputs.version }}
-          name: "Release ${{ inputs.version }}"
+          tag_name: ${{ needs.build-android.outputs.version }}
+          name: "Release ${{ needs.build-android.outputs.version }}"
           files: |
-            ${{ needs.build-android.outputs.app_name }}-${{ inputs.version }}.apk
-            debug-symbols-${{ inputs.version }}.zip
-          draft: true
+            ${{ needs.build-android.outputs.app_name }}-${{ needs.build-android.outputs.version }}.apk
+            debug-symbols-${{ needs.build-android.outputs.version }}.zip
+          draft: true # Mantenemos draft para revisión final humana
           prerelease: false
           generate_release_notes: true
