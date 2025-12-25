@@ -1,6 +1,6 @@
 # ⚡ Electrics-App: El Gemelo Digital en tu bolsillo
 
-[![Release](https://img.shields.io/github/v/release/rubenOrtz/Electrics-App?style=for-the-badge)](https://github.com/rubenOrtz/Electrics-App/releases)
+[![Release](https://img.shields.io/github/v/release/rubenOrtz/Electrics-App?include_prereleases&sort=date&display_name=release&style=for-the-badge)](https://github.com/rubenOrtz/Electrics-App/releases)
 [![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)](https://flutter.dev)
 [![License](https://img.shields.io/github/license/rubenOrtz/Electrics-App?style=for-the-badge)](LICENSE)
 
