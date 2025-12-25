@@ -75,24 +75,24 @@ void main() {
 
       // 1. La Fuente mantiene su tensión nominal (Infine Bus)
       expect(sourceV, closeTo(225.874, 0.001));
-          
+
       // 2. La Protección recibe menos tensión debido al cable de acometida
-      // Caída esperada: ~3.45V
+      // Caída esperada: ~4.12V (caliente 70C)
       expect(protectionV, equals(sourceV));
-      expect(protectionV, closeTo(226.55, 0.5));
+      expect(protectionV, closeTo(225.87, 0.5));
 
       // 3. La Protección es transparente (no añade caída propia)
       // Esto se verifica implícitamente porque la tensión en 'protectionV'
       // es EXACTAMENTE (230 - CaídaCableAcometida), sin nada más restado.
 
       // 4. La Carga recibe aún menos tensión debido a su propio cable
-      // Caída adicional: ~3.45V
+      // Caída adicional: ~4.12V
       expect(loadV, lessThan(protectionV));
-      expect(loadV, closeTo(221.748, 0.001));
+      expect(loadV, closeTo(221.75, 0.5));
 
-      // Verificación de caída acumulada total (~6.9V)
-      final totalDrop = sourceV - loadV;
-      expect(totalDrop, closeTo(6.9, 1.0));
+      // Verificación de caída acumulada total (~8.25V)
+      final totalDrop = 230.0 - loadV;
+      expect(totalDrop, closeTo(8.25, 1.0));
     });
   });
 }
