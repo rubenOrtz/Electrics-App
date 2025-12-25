@@ -4,6 +4,8 @@ import '../../../../config/theme/app_themes.dart';
 import '../../domain/entities/electrical_enums.dart';
 import '../../domain/entities/catalog_metadata.dart';
 import '../../../components/domain/entities/component_template.dart';
+import '../../domain/services/electrical_calculator.dart';
+
 import 'cable_catalog_dialog.dart';
 import 'dart:math';
 
@@ -13,6 +15,8 @@ class _CalcResult {
   final double amps;
   final bool isCompliant;
   final double dUVolts;
+  final double iz;
+  final bool izCompliant;
 
   _CalcResult({
     required this.section,
@@ -20,6 +24,8 @@ class _CalcResult {
     required this.amps,
     required this.isCompliant,
     required this.dUVolts,
+    required this.iz,
+    required this.izCompliant,
   });
 }
 
@@ -47,7 +53,13 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
   late double _cosPhi;
   late double _lengthMeters;
   late double? _selectedSection;
-  late String _installMethod;
+
+  // Iz Params
+  late InstallationMethod _installMethod;
+  late CableInsulation _insulation;
+  late double _ambientTemp;
+  late int _numCircuits;
+  late double _soilResistivity;
 
   // UI State
   bool _powerUnitIsWatts = false;
@@ -68,7 +80,12 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
     _cosPhi = d?.cosPhi ?? 0.9;
     _lengthMeters = d?.lengthMeters ?? 45;
     _selectedSection = d?.sectionMm2;
-    _installMethod = d?.installMethod ?? "Bajo Tubo (Pared Aislante)";
+
+    _installMethod = d?.installMethod ?? InstallationMethod.b1;
+    _insulation = d?.insulation ?? CableInsulation.pvc;
+    _ambientTemp = d?.correctionFactors?.ambientTemperature ?? 30.0;
+    _numCircuits = d?.correctionFactors?.numberOfCircuits ?? 1;
+    _soilResistivity = d?.correctionFactors?.soilResistivity ?? 2.5;
 
     // Init Controller
     _lengthController =
@@ -88,7 +105,17 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
     return double.tryParse(v.replaceAll(',', '.')) ?? 0.0;
   }
 
-  final List<double> _standardSections = [1.5, 2.5, 4.0, 6.0, 10.0, 16.0, 25.0];
+  final List<double> _standardSections = [
+    1.5,
+    2.5,
+    4.0,
+    6.0,
+    10.0,
+    16.0,
+    25.0,
+    35.0,
+    50.0
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -322,17 +349,6 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
                             });
                           },
                         ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text("1m",
-                                style: TextStyle(
-                                    color: theme.disabledColor, fontSize: 10)),
-                            Text("100m",
-                                style: TextStyle(
-                                    color: theme.disabledColor, fontSize: 10)),
-                          ],
-                        )
                       ],
                     ),
                   ),
@@ -342,11 +358,22 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
                   _sectionTitle(l10n.cableType, theme),
                   const SizedBox(height: 10),
                   _buildCableSelector(theme),
+
+                  const SizedBox(height: 10),
+                  // NEW: Insulation Selector
+                  _buildInsulationSelector(theme),
                   const SizedBox(height: 20),
 
                   _sectionTitle(l10n.installationMethod, theme),
                   const SizedBox(height: 10),
                   _buildInstallationSelector(theme, l10n),
+
+                  // NEW: Correction Factors
+                  const SizedBox(height: 20),
+                  _sectionTitle("Factores de Corrección", theme),
+                  const SizedBox(height: 10),
+                  _buildCorrectionFactors(theme),
+
                   const SizedBox(height: 20),
 
                   // 5. Results (Real-time Estimation)
@@ -367,6 +394,12 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12))),
                 onPressed: () {
+                  final factors = CorrectionFactors(
+                    ambientTemperature: _ambientTemp,
+                    numberOfCircuits: _numCircuits,
+                    soilResistivity: _soilResistivity,
+                  );
+
                   widget.onSave(CircuitConfigData(
                       type: _selectedType,
                       isThreePhase: _isThreePhase,
@@ -375,6 +408,8 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
                       lengthMeters: _lengthMeters,
                       sectionMm2: _calculateValues().section,
                       installMethod: _installMethod,
+                      insulation: _insulation,
+                      correctionFactors: factors,
                       cableCatalogData: _cableCatalogData));
                 },
                 icon: const Icon(Icons.check_circle, color: Colors.white),
@@ -478,6 +513,49 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
     );
   }
 
+  Widget _buildInsulationSelector(ThemeData theme) {
+    final diagramTheme = theme.extension<DiagramTheme>()!;
+    final cardBg = diagramTheme.nodeBg;
+    final borderColor = diagramTheme.nodeBorder;
+    final accent = diagramTheme.accentColor;
+    final text = diagramTheme.textColor;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+          color: cardBg,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: borderColor)),
+      child: AbsorbPointer(
+        absorbing: _cableCatalogData != null,
+        child: Opacity(
+          opacity: _cableCatalogData != null ? 0.6 : 1.0,
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<CableInsulation>(
+              dropdownColor: cardBg,
+              value: _insulation,
+              isExpanded: true,
+              icon: Icon(Icons.arrow_drop_down, color: accent),
+              hint: Text("Aislamiento",
+                  style: TextStyle(color: accent, fontWeight: FontWeight.bold)),
+              items: CableInsulation.values
+                  .map((i) => DropdownMenuItem(
+                        value: i,
+                        child: Text(i.label,
+                            style: TextStyle(
+                                color: text, fontWeight: FontWeight.bold)),
+                      ))
+                  .toList(),
+              onChanged: (v) => setState(() {
+                if (v != null) _insulation = v;
+              }),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _openCableCatalog() async {
     final result = await showDialog<Map<String, dynamic>>(
       context: context,
@@ -491,6 +569,28 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
       setState(() {
         _cableCatalogData = metadata;
         _selectedSection = cable.section;
+
+        // Map Insulation
+        final insLower = cable.insulationType.toLowerCase();
+        if (insLower.contains('pvc')) {
+          _insulation = CableInsulation.pvc;
+        } else if (insLower.contains('xlpe') || insLower.contains('z1')) {
+          // Z1 acts as XLPE thermally usually, or mapped to Z1 if exists
+          _insulation = (insLower.contains('z1'))
+              ? CableInsulation.z1
+              : CableInsulation.xlpe;
+        }
+
+        // Map Method if present (e.g. "F")
+        if (cable.installationMethod != null) {
+          final mLower = cable.installationMethod!.toLowerCase();
+          for (var m in InstallationMethod.values) {
+            if (m.name == mLower) {
+              _installMethod = m;
+              break;
+            }
+          }
+        }
       });
     }
   }
@@ -506,38 +606,128 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
     final accent = diagramTheme.accentColor;
     final cardBg = diagramTheme.nodeBg;
     final borderColor = diagramTheme.nodeBorder;
+    final text = diagramTheme.textColor;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
           color: cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: borderColor)),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-                color: accent.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8)),
-            child: Icon(Icons.grid_view, color: accent),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(_installMethod,
-                    style: TextStyle(
-                        color: theme.textTheme.bodyMedium?.color,
-                        fontWeight: FontWeight.bold)),
-              ],
+      child: AbsorbPointer(
+        absorbing: _cableCatalogData != null,
+        child: Opacity(
+          opacity: _cableCatalogData != null ? 0.6 : 1.0,
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<InstallationMethod>(
+              dropdownColor: cardBg,
+              value: _installMethod,
+              isExpanded: true,
+              icon: Icon(Icons.arrow_drop_down, color: accent),
+              items: InstallationMethod.values
+                  .map((m) => DropdownMenuItem(
+                        value: m,
+                        child: Text(m.label,
+                            style: TextStyle(
+                                color: text,
+                                fontSize: 13,
+                                overflow: TextOverflow.ellipsis)),
+                      ))
+                  .toList(),
+              onChanged: (v) => setState(() {
+                if (v != null) _installMethod = v;
+                // Reset factors defaults if needed?
+              }),
             ),
           ),
-          Icon(Icons.chevron_right, color: theme.disabledColor)
-        ],
+        ),
       ),
     );
+  }
+
+  Widget _buildCorrectionFactors(ThemeData theme) {
+    final diagramTheme = theme.extension<DiagramTheme>()!;
+    final cardBg = diagramTheme.nodeBg;
+    final borderColor = diagramTheme.nodeBorder;
+    final accent = diagramTheme.accentColor;
+
+    final isBuried = _installMethod.isBuried;
+    final tempLabel =
+        isBuried ? "Temperatura Suelo (°C)" : "Temperatura Aire (°C)";
+
+    return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+            color: cardBg,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: borderColor)),
+        child: Column(
+          children: [
+            // Temperature
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(tempLabel,
+                    style: TextStyle(color: theme.disabledColor, fontSize: 12)),
+                Text("${_ambientTemp.toStringAsFixed(0)}°C",
+                    style:
+                        TextStyle(color: accent, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            Slider(
+              value: _ambientTemp.clamp(10.0, 60.0),
+              min: 10,
+              max: 60,
+              divisions: 10,
+              activeColor: accent,
+              onChanged: (v) => setState(() => _ambientTemp = v),
+            ),
+
+            // Grouping
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text("Circuitos Agrupados",
+                    style: TextStyle(color: theme.disabledColor, fontSize: 12)),
+                Text("$_numCircuits",
+                    style:
+                        TextStyle(color: accent, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            Slider(
+              value: _numCircuits.toDouble(),
+              min: 1,
+              max: 10,
+              divisions: 9,
+              activeColor: accent,
+              onChanged: (v) => setState(() => _numCircuits = v.toInt()),
+            ),
+
+            // Soil Resistivity (Conditional)
+            if (isBuried) ...[
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("Resistividad Térmica (K·m/W)",
+                      style:
+                          TextStyle(color: theme.disabledColor, fontSize: 12)),
+                  Text(_soilResistivity.toStringAsFixed(1),
+                      style: TextStyle(
+                          color: accent, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              Slider(
+                value: _soilResistivity,
+                min: 0.5,
+                max: 3.0,
+                divisions: 5,
+                activeColor: accent,
+                onChanged: (v) => setState(() => _soilResistivity = v),
+              ),
+            ]
+          ],
+        ));
   }
 
   Widget _sectionTitle(String text, ThemeData theme) {
@@ -730,6 +920,13 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
 
     _CalcResult? best;
 
+    // Create current correction factors
+    final factors = CorrectionFactors(
+      ambientTemperature: _ambientTemp,
+      numberOfCircuits: _numCircuits,
+      soilResistivity: _soilResistivity,
+    );
+
     for (var s in sectionsToCheck) {
       // Impedance
       double r = (1.0 / conductivity) * _lengthMeters / s;
@@ -748,26 +945,40 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
 
       double pct = (baseV > 0) ? (dU / baseV) * 100 : 0.0;
 
-      // Amps
+      // Amps (Ib)
       // Mono: P / (230 * Cos)
       // Tri: P / (1.732 * 400 * Cos)
       double iDenom =
           _isThreePhase ? (1.732 * 400.0 * cosVal) : (230.0 * cosVal);
       double amps = iDenom > 0 ? p / iDenom : 0.0;
 
-      final limit = _selectedType == LoadType.lighting ? 3.0 : 5.0;
-      final compliant = pct <= limit;
+      // Iz Calculation (Rigorous)
+      final iz = ElectricalCalculator.calculateIz(
+        sectionMm2: s,
+        material: ConductorMaterial.copper, // Configurable later
+        insulation: _insulation,
+        method: _installMethod,
+        factors: factors,
+      );
+
+      final dropLimit = _selectedType == LoadType.lighting ? 3.0 : 5.0;
+      final dropCompliant = pct <= dropLimit;
+      final izCompliant = amps <= iz; // Ib <= Iz
+
+      final totalCompliant = dropCompliant && izCompliant;
 
       final res = _CalcResult(
           section: s,
           dropPercent: pct,
           amps: amps,
-          isCompliant: compliant,
-          dUVolts: dU);
+          isCompliant: totalCompliant,
+          dUVolts: dU,
+          iz: iz,
+          izCompliant: izCompliant);
 
       if (_selectedSection != null) return res;
 
-      if (compliant) {
+      if (totalCompliant) {
         return res;
       }
       best = res;
@@ -782,12 +993,15 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
     final dropPercent = res.dropPercent;
     final displaySection = res.section;
     final isCompliant = res.isCompliant;
+    final iz = res.iz;
 
     final statusColor = res.isCompliant ? Colors.green : Colors.red;
 
     final ampsStr = res.amps < 1.0
         ? "${(res.amps * 1000).toStringAsFixed(0)} mA"
         : "${res.amps.toStringAsFixed(1)} A";
+
+    final izStr = "${iz.toStringAsFixed(1)} A";
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -823,16 +1037,34 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
             ],
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          // Grid for results
+          Wrap(
+            alignment: WrapAlignment.spaceEvenly,
+            spacing: 8,
             children: [
-              _buildResultValue(l10n.propCurrent, ampsStr, theme: theme),
-              _buildResultValue(
-                  l10n.propDrop, "${dropPercent.toStringAsFixed(2)} %",
-                  color: statusColor, theme: theme),
-              _buildResultValue(
-                  l10n.propSection, "${displaySection.toStringAsFixed(1)} mm²",
-                  theme: theme),
+              SizedBox(
+                  width: 80,
+                  child: _buildResultValue(l10n.propCurrent, ampsStr,
+                      theme: theme)),
+              SizedBox(
+                  width: 80,
+                  child: _buildResultValue("Iz (Max)", izStr,
+                      color: res.izCompliant ? Colors.green : Colors.red,
+                      theme: theme)),
+              SizedBox(
+                  width: 80,
+                  child: _buildResultValue(
+                      l10n.propDrop, "${dropPercent.toStringAsFixed(2)} %",
+                      color: res.dropPercent <=
+                              (_selectedType == LoadType.lighting ? 3 : 5)
+                          ? Colors.green
+                          : Colors.red,
+                      theme: theme)),
+              SizedBox(
+                  width: 80,
+                  child: _buildResultValue(l10n.propSection,
+                      "${displaySection.toStringAsFixed(1)} mm²",
+                      theme: theme)),
             ],
           )
         ],
@@ -848,7 +1080,11 @@ class CircuitConfigData {
   final double cosPhi;
   final double lengthMeters;
   final double? sectionMm2;
-  final String installMethod;
+  // Updates to persistent types
+  final InstallationMethod installMethod;
+  final CableInsulation insulation;
+  final CorrectionFactors? correctionFactors;
+
   final CatalogMetadata? cableCatalogData;
 
   CircuitConfigData({
@@ -859,6 +1095,8 @@ class CircuitConfigData {
     required this.lengthMeters,
     this.sectionMm2,
     required this.installMethod,
+    required this.insulation,
+    this.correctionFactors,
     this.cableCatalogData,
   });
 }
