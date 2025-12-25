@@ -1,20 +1,33 @@
 name: 🚀 Production Release
 
 on:
-  push:
-    tags:
-      - 'v*' # Se activa con tags como v1.0, v2.3.1, etc.
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Versión a crear (ej: v1.0.0)'
+        required: true
+        default: 'v1.0.0'
 
 permissions:
   contents: write
 
 jobs:
-  build-android:
-    name: 🤖 Build Android APK
+  build-and-release:
+    name: 🤖 Build & Attach to Draft
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🏷️ Create & Push Tag
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git tag ${{ inputs.version }}
+          git push origin ${{ inputs.version }}
+        continue-on-error: true 
 
       - name: ☕ Setup Java
         uses: actions/setup-java@v4
@@ -50,37 +63,13 @@ jobs:
       - name: 🏗️ Build APK (Obfuscated)
         run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
 
-      - name: 📤 Upload APK Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
-
-      - name: 🗺️ Upload Debug Symbols
-        uses: actions/upload-artifact@v4
-        with:
-          name: debug-symbols
-          path: build/app/outputs/symbols
-
-  release:
-    name: 📦 Create GitHub Release
-    needs: [build-android]
-    runs-on: ubuntu-latest
-    steps:
-      - name: 📥 Download APK Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: release-apk
-
       - name: 🏷️ Rename APK
-        run: mv app-release.apk Electrics-App-${{ github.ref_name }}.apk
+        run: mv build/app/outputs/flutter-apk/app-release.apk Electrics-App-${{ inputs.version }}.apk
 
-      - name: 🎉 Publish Release
+      - name: 🚀 Update Draft Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
-          files: Electrics-App-${{ github.ref_name }}.apk
-          name: "Release ${{ github.ref_name }}"
-          body: "🚀 Nueva versión generada automáticamente.\n\n### Cambios:\n- Actualización automática desde Main.\n- Código ofuscado y optimizado."
-          draft: false
-          prerelease: false
+          tag_name: ${{ inputs.version }}
+          files: Electrics-App-${{ inputs.version }}.apk
+          draft: true  
+          prerelease: false 
