@@ -2,74 +2,305 @@ name: 🚀 Production Release
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: 'Versión a crear (ej: v1.0.0)'
-        required: true
-        default: 'v1.0.0'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'test/**'
+      - 'pubspec.yaml'
+      - '.github/workflows/release.yml'
 
 permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    name: 🤖 Build & Attach to Draft
+  # -----------------------------------------------------------------
+  # JOB 1: QUALITY GATE & BUILD
+  # -----------------------------------------------------------------
+  verify-and-build:
+    name: 🛡️ Verify, Build & Package
     runs-on: ubuntu-latest
+    outputs:
+      app_name: ${{ steps.meta.outputs.APP_NAME }}
+      version: ${{ steps.meta.outputs.VERSION }}
+      version_tag: ${{ steps.meta.outputs.VERSION_TAG }}
+      build_number: ${{ steps.meta.outputs.BUILD_NUMBER }}
+      is_release: ${{ github.event_name == 'workflow_dispatch' }}
     steps:
-      - name: 📥 Checkout Repository
+      - name: 📥 Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: 🏷️ Create & Push Tag
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git tag ${{ inputs.version }}
-          git push origin ${{ inputs.version }}
-        continue-on-error: true 
+      # 1. STRICT VERSION VALIDATION
+      - name: 🧠 Extract & Validate Metadata
+        id: meta
+        uses: mikefarah/yq@master
+        with:
+          cmd: |
+            APP_NAME=$(yq '.name' pubspec.yaml)
+            VERSION_FULL=$(yq '.version' pubspec.yaml)
+            
+            # STRICT REGEX VALIDATION: Must be x.y.z+n
+            if [[ ! "$VERSION_FULL" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$ ]]; then
+              echo "⛔ ERROR: Invalid version format in pubspec.yaml"
+              echo "   Found: '$VERSION_FULL'"
+              echo "   Required format: x.y.z+n (e.g., 1.0.0+1)"
+              exit 1
+            fi
+            
+            # Extract components AFTER validation
+            VERSION_BASE=${VERSION_FULL%+*}
+            BUILD_NUMBER=${VERSION_FULL#*+}
+            
+            echo "✅ Validated: $APP_NAME v$VERSION_BASE (Build: $BUILD_NUMBER)"
+            
+            # Export for subsequent steps
+            # CRITICAL FIX: Include build number in tag to allow hotfixes (v1.0.0-b1, v1.0.0-b2)
+            echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
+            echo "VERSION=v$VERSION_BASE" >> $GITHUB_OUTPUT
+            echo "VERSION_TAG=v$VERSION_BASE-b$BUILD_NUMBER" >> $GITHUB_OUTPUT
+            echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
-      - name: ☕ Setup Java
+      # 2. VERSION INCREMENT CHECK
+      - name: 🔍 Verify Version Was Bumped
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION_TAG: ${{ steps.meta.outputs.VERSION_TAG }}
+        run: |
+          # Get the latest tag
+          LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0-b0")
+          
+          if [[ "$VERSION_TAG" == "$LATEST_TAG" ]]; then
+            echo "⛔ ERROR: Build number was not incremented!"
+            echo "   Current tag: $VERSION_TAG"
+            echo "   Latest tag: $LATEST_TAG"
+            echo "   Action: Increment build number in pubspec.yaml (e.g., 1.0.0+1 -> 1.0.0+2)"
+            exit 1
+          fi
+          
+          echo "✅ Version bumped from $LATEST_TAG to $VERSION_TAG"
+
+      # 3. GIT TAG COLLISION CHECK
+      - name: 🛑 Check Tag Uniqueness
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          TAG: ${{ steps.meta.outputs.VERSION_TAG }}
+        run: |
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "⛔ ERROR: Git tag '$TAG' already exists"
+            echo "   Action: Increment build number in pubspec.yaml"
+            exit 1
+          fi
+          echo "✅ Tag '$TAG' is available"
+
+      - name: ☕ Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: 🐦 Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+          cache: true
 
-      - name: 📦 Get Dependencies
+      - name: 📦 Install Dependencies
         run: flutter pub get
 
-      - name: 🕵️ Analyze Code
-        run: flutter analyze
+      # 4. SECURITY AUDIT
+      - name: 🛡️ Audit Dependencies
+        run: dart pub audit --json
+        continue-on-error: true  # Don't block on low-severity warnings
 
-      - name: 🧪 Run Flutter Tests
+      # 5. CODE GENERATION (Modern Dart Command) + Caching
+      - name: 🏗️ Generate Code
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      # 6. CONFIG GENERATION - Shell Injection Safe (Using jq)
+      - name: 🔐 Generate Environment Config
+        env:
+          API_KEY: ${{ secrets.API_KEY }}
+          BASE_URL: ${{ secrets.BASE_URL }}
+        run: |
+          # Validate secrets exist
+          if [[ -z "$API_KEY" ]]; then
+            echo "⛔ CRITICAL: API_KEY secret is missing!"
+            exit 1
+          fi
+          
+          if [[ -z "$BASE_URL" ]]; then
+            echo "⛔ CRITICAL: BASE_URL secret is missing!"
+            exit 1
+          fi
+          
+          # SECURITY FIX: Use jq to safely construct JSON (prevents shell injection)
+          # If a secret contains ", `, or $, cat EOF would break or execute code
+          jq -n \
+            --arg apiKey "$API_KEY" \
+            --arg baseUrl "$BASE_URL" \
+            '{API_KEY: $apiKey, BASE_URL: $baseUrl}' > env.json
+          
+          # Validate generated JSON
+          jq empty env.json || {
+            echo "⛔ ERROR: Generated env.json is malformed"
+            exit 1
+          }
+          
+          echo "✅ Environment config generated securely with $(jq 'keys | length' env.json) keys"
+
+      - name: 🕵️ Static Analysis
+        run: flutter analyze --fatal-infos --fatal-warnings
+
+      - name: 🧪 Unit Tests
         run: flutter test
 
-      - name: 🔐 Decode Keystore
+      # 7. RELEASE BUILD VERIFICATION (Runs on PRs too!)
+      # PRs build unsigned AAB to verify production compilation
+      - name: 🏗️ Build Release AAB (Dry-Run for PRs)
+        if: github.event_name == 'pull_request'
         run: |
+          # Create dummy config for PR builds
+          echo '{"API_KEY":"test","BASE_URL":"https://test.com"}' > env.json
+          
+          # Build WITHOUT signing to verify release compilation
+          flutter build appbundle --release \
+            --dart-define-from-file=env.json
+          
+          echo "✅ Release build compiles successfully (unsigned)"
+
+      # 8. ANDROID SIGNING SETUP (Production Only)
+      - name: 🔐 Configure Android Signing
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          # FIX: Place keystore in android/app/ directory where Gradle expects it
+          # Line 11 in build.gradle.kts: rootProject.file("key.properties")
+          # Line 45 in build.gradle.kts: file(it) - resolves relative to android/
+          
           echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore.jks
+          
+          # Create key.properties in android/ directory (rootProject location)
+          # storeFile path is relative to android/, so we reference app/upload-keystore.jks
+          cat > android/key.properties << EOF
+          storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}
+          keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}
+          storeFile=app/upload-keystore.jks
+          EOF
+          
+          echo "✅ Keystore: android/app/upload-keystore.jks"
+          echo "✅ Properties: android/key.properties"
 
-      - name: 🔑 Create key.properties
+      - name: 🏗️ Build Production AAB (Signed)
+        if: github.event_name == 'workflow_dispatch'
         run: |
-          echo "storePassword=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" > android/key.properties
-          echo "keyPassword=${{ secrets.ANDROID_KEY_PASSWORD }}" >> android/key.properties
-          echo "keyAlias=${{ secrets.ANDROID_KEY_ALIAS }}" >> android/key.properties
-          echo "storeFile=upload-keystore.jks" >> android/key.properties
+          flutter build appbundle --release \
+            --obfuscate \
+            --split-debug-info=build/app/outputs/symbols \
+            --dart-define-from-file=env.json
+          
+          echo "✅ Signed production AAB built successfully"
 
-      - name: 🏗️ Build APK (Obfuscated)
-        run: flutter build apk --release --obfuscate --split-debug-info=build/app/outputs/symbols
+      - name: 📦 Prepare Debug Symbols
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          # Move symbols directory for artifact upload
+          # No need to zip - upload-artifact@v4 compresses automatically
+          mv build/app/outputs/symbols build/debug-symbols
+          echo "✅ Debug symbols prepared"
 
-      - name: 🏷️ Rename APK
-        run: mv build/app/outputs/flutter-apk/app-release.apk Electrics-App-${{ inputs.version }}.apk
-
-      - name: 🚀 Update Draft Release
-        uses: softprops/action-gh-release@v1
+      - name: 📤 Upload Release Artifacts
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: ${{ inputs.version }}
-          files: Electrics-App-${{ inputs.version }}.apk
-          draft: true  
-          prerelease: false 
+          name: release-bundle
+          path: |
+            build/app/outputs/bundle/release/app-release.aab
+            build/debug-symbols/**
+          retention-days: 1
+          compression-level: 6  # upload-artifact handles compression
+
+  # -----------------------------------------------------------------
+  # JOB 2: PUBLISH RELEASE (Only on manual dispatch)
+  # -----------------------------------------------------------------
+  publish-release:
+    name: 📦 Create GitHub Release
+    needs: [verify-and-build]
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: 📥 Download Build Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-bundle
+          path: artifacts
+
+      - name: 🔍 Verify Downloaded Artifacts
+        run: |
+          echo "📦 Artifact contents:"
+          ls -lhR artifacts/
+          
+          # Verify expected files exist
+          if [[ ! -f "artifacts/app-release.aab" ]]; then
+            echo "⛔ ERROR: app-release.aab not found in artifacts"
+            exit 1
+          fi
+          
+          if [[ ! -d "artifacts/debug-symbols" ]]; then
+            echo "⛔ ERROR: debug-symbols directory not found in artifacts"
+            exit 1
+          fi
+          
+          echo "✅ All required artifacts present"
+
+      - name: 🏷️ Prepare Release Assets
+        env:
+          APP_NAME: ${{ needs.verify-and-build.outputs.app_name }}
+          VERSION: ${{ needs.verify-and-build.outputs.version }}
+          BUILD: ${{ needs.verify-and-build.outputs.build_number }}
+        run: |
+          # Move files to current directory with semantic naming
+          mv artifacts/app-release.aab ${APP_NAME}-${VERSION}-build${BUILD}.aab
+          
+          # Zip debug symbols for release attachment
+          cd artifacts/debug-symbols
+          zip -r ../../debug-symbols-${VERSION}.zip .
+          cd ../..
+          
+          # Verify renamed files
+          ls -lh *.aab *.zip
+          echo "✅ Assets prepared for release"
+
+      # CRITICAL: Tag creation happens AFTER successful build
+      # Tags include build number to allow hotfixes (v1.0.0-b1, v1.0.0-b2)
+      - name: 🎉 Create Release & Tag
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.verify-and-build.outputs.version_tag }}
+          name: "Release ${{ needs.verify-and-build.outputs.version }} (Build ${{ needs.verify-and-build.outputs.build_number }})"
+          body: |
+            ## 🚀 Production Release ${{ needs.verify-and-build.outputs.version }}
+            
+            **Build Number:** ${{ needs.verify-and-build.outputs.build_number }}
+            **App:** ${{ needs.verify-and-build.outputs.app_name }}
+            
+            ### 📦 Downloads
+            - **Android App Bundle (AAB):** `${{ needs.verify-and-build.outputs.app_name }}-${{ needs.verify-and-build.outputs.version }}-build${{ needs.verify-and-build.outputs.build_number }}.aab`
+            - **Debug Symbols:** `debug-symbols-${{ needs.verify-and-build.outputs.version }}.zip`
+            
+            ### ✅ Quality Gates Passed
+            - ✅ Static Analysis (`flutter analyze`)
+            - ✅ Unit Tests (`flutter test`)
+            - ✅ Code Generation (`build_runner`)
+            - ✅ Version validation (strict semver)
+          files: |
+            *.aab
+            *.zip
+          draft: true
+          make_latest: true
+          generate_release_notes: true
+          fail_on_unmatched_files: true
