@@ -24,6 +24,8 @@ mixin _$ConductorAttributes {
   double get sectionMm2 => throw _privateConstructorUsedError;
   ConductorMaterial get material => throw _privateConstructorUsedError;
   CableInsulation get insulation => throw _privateConstructorUsedError;
+  InstallationMethod get method => throw _privateConstructorUsedError;
+  CorrectionFactors get factors => throw _privateConstructorUsedError;
   String get label => throw _privateConstructorUsedError;
 
   Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
@@ -43,6 +45,8 @@ abstract class $ConductorAttributesCopyWith<$Res> {
       double sectionMm2,
       ConductorMaterial material,
       CableInsulation insulation,
+      InstallationMethod method,
+      CorrectionFactors factors,
       String label});
 }
 
@@ -63,6 +67,8 @@ class _$ConductorAttributesCopyWithImpl<$Res, $Val extends ConductorAttributes>
     Object? sectionMm2 = null,
     Object? material = null,
     Object? insulation = null,
+    Object? method = null,
+    Object? factors = null,
     Object? label = null,
   }) {
     return _then(_value.copyWith(
@@ -82,6 +88,14 @@ class _$ConductorAttributesCopyWithImpl<$Res, $Val extends ConductorAttributes>
           ? _value.insulation
           : insulation // ignore: cast_nullable_to_non_nullable
               as CableInsulation,
+      method: null == method
+          ? _value.method
+          : method // ignore: cast_nullable_to_non_nullable
+              as InstallationMethod,
+      factors: null == factors
+          ? _value.factors
+          : factors // ignore: cast_nullable_to_non_nullable
+              as CorrectionFactors,
       label: null == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -103,6 +117,8 @@ abstract class _$$ConductorAttributesImplCopyWith<$Res>
       double sectionMm2,
       ConductorMaterial material,
       CableInsulation insulation,
+      InstallationMethod method,
+      CorrectionFactors factors,
       String label});
 }
 
@@ -121,6 +137,8 @@ class __$$ConductorAttributesImplCopyWithImpl<$Res>
     Object? sectionMm2 = null,
     Object? material = null,
     Object? insulation = null,
+    Object? method = null,
+    Object? factors = null,
     Object? label = null,
   }) {
     return _then(_$ConductorAttributesImpl(
@@ -140,6 +158,14 @@ class __$$ConductorAttributesImplCopyWithImpl<$Res>
           ? _value.insulation
           : insulation // ignore: cast_nullable_to_non_nullable
               as CableInsulation,
+      method: null == method
+          ? _value.method
+          : method // ignore: cast_nullable_to_non_nullable
+              as InstallationMethod,
+      factors: null == factors
+          ? _value.factors
+          : factors // ignore: cast_nullable_to_non_nullable
+              as CorrectionFactors,
       label: null == label
           ? _value.label
           : label // ignore: cast_nullable_to_non_nullable
@@ -156,6 +182,8 @@ class _$ConductorAttributesImpl implements _ConductorAttributes {
       this.sectionMm2 = 6.0,
       this.material = ConductorMaterial.copper,
       this.insulation = CableInsulation.xlpe,
+      this.method = InstallationMethod.b1,
+      this.factors = const CorrectionFactors(),
       this.label = 'Cable'});
 
   factory _$ConductorAttributesImpl.fromJson(Map<String, dynamic> json) =>
@@ -175,11 +203,17 @@ class _$ConductorAttributesImpl implements _ConductorAttributes {
   final CableInsulation insulation;
   @override
   @JsonKey()
+  final InstallationMethod method;
+  @override
+  @JsonKey()
+  final CorrectionFactors factors;
+  @override
+  @JsonKey()
   final String label;
 
   @override
   String toString() {
-    return 'ConductorAttributes(lengthMeters: $lengthMeters, sectionMm2: $sectionMm2, material: $material, insulation: $insulation, label: $label)';
+    return 'ConductorAttributes(lengthMeters: $lengthMeters, sectionMm2: $sectionMm2, material: $material, insulation: $insulation, method: $method, factors: $factors, label: $label)';
   }
 
   @override
@@ -195,13 +229,15 @@ class _$ConductorAttributesImpl implements _ConductorAttributes {
                 other.material == material) &&
             (identical(other.insulation, insulation) ||
                 other.insulation == insulation) &&
+            (identical(other.method, method) || other.method == method) &&
+            (identical(other.factors, factors) || other.factors == factors) &&
             (identical(other.label, label) || other.label == label));
   }
 
   @JsonKey(ignore: true)
   @override
-  int get hashCode => Object.hash(
-      runtimeType, lengthMeters, sectionMm2, material, insulation, label);
+  int get hashCode => Object.hash(runtimeType, lengthMeters, sectionMm2,
+      material, insulation, method, factors, label);
 
   @JsonKey(ignore: true)
   @override
@@ -224,6 +260,8 @@ abstract class _ConductorAttributes implements ConductorAttributes {
       final double sectionMm2,
       final ConductorMaterial material,
       final CableInsulation insulation,
+      final InstallationMethod method,
+      final CorrectionFactors factors,
       final String label}) = _$ConductorAttributesImpl;
 
   factory _ConductorAttributes.fromJson(Map<String, dynamic> json) =
@@ -237,6 +275,10 @@ abstract class _ConductorAttributes implements ConductorAttributes {
   ConductorMaterial get material;
   @override
   CableInsulation get insulation;
+  @override
+  InstallationMethod get method;
+  @override
+  CorrectionFactors get factors;
   @override
   String get label;
   @override

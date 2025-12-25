@@ -11,6 +11,8 @@ class ConductorAttributes with _$ConductorAttributes {
     @Default(6.0) double sectionMm2,
     @Default(ConductorMaterial.copper) ConductorMaterial material,
     @Default(CableInsulation.xlpe) CableInsulation insulation,
+    @Default(InstallationMethod.b1) InstallationMethod method,
+    @Default(CorrectionFactors()) CorrectionFactors factors,
     @Default('Cable') String label,
   }) = _ConductorAttributes;
 
