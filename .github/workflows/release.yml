@@ -35,32 +35,32 @@ jobs:
       # 1. STRICT VERSION VALIDATION
       - name: 🧠 Extract & Validate Metadata
         id: meta
-        uses: mikefarah/yq@master
-        with:
-          cmd: |
-            APP_NAME=$(yq '.name' pubspec.yaml)
-            VERSION_FULL=$(yq '.version' pubspec.yaml)
-            
-            # STRICT REGEX VALIDATION: Must be x.y.z+n
-            if [[ ! "$VERSION_FULL" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$ ]]; then
-              echo "⛔ ERROR: Invalid version format in pubspec.yaml"
-              echo "   Found: '$VERSION_FULL'"
-              echo "   Required format: x.y.z+n (e.g., 1.0.0+1)"
-              exit 1
-            fi
-            
-            # Extract components AFTER validation
-            VERSION_BASE=${VERSION_FULL%+*}
-            BUILD_NUMBER=${VERSION_FULL#*+}
-            
-            echo "✅ Validated: $APP_NAME v$VERSION_BASE (Build: $BUILD_NUMBER)"
-            
-            # Export for subsequent steps
-            # CRITICAL FIX: Include build number in tag to allow hotfixes (v1.0.0-b1, v1.0.0-b2)
-            echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
-            echo "VERSION=v$VERSION_BASE" >> $GITHUB_OUTPUT
-            echo "VERSION_TAG=v$VERSION_BASE-b$BUILD_NUMBER" >> $GITHUB_OUTPUT
-            echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
+        run: |
+          # Extraemos los valores usando yq (instalado por defecto en ubuntu-latest)
+          APP_NAME=$(yq '.name' pubspec.yaml)
+          VERSION_FULL=$(yq '.version' pubspec.yaml)
+          
+          echo "Buscando versión: $VERSION_FULL"
+
+          # VALIDACIÓN REGEX: Debe ser x.y.z+n
+          if [[ ! "$VERSION_FULL" =~ ^[0-9]+\.[0-9]+\.[0-9]+\+[0-9]+$ ]]; then
+            echo "⛔ ERROR: Formato de versión inválido en pubspec.yaml"
+            echo "   Encontrado: '$VERSION_FULL'"
+            echo "   Formato requerido: x.y.z+n (ejemplo: 1.0.0+1)"
+            exit 1
+          fi
+          
+          # Extraer componentes
+          VERSION_BASE=${VERSION_FULL%+*}
+          BUILD_NUMBER=${VERSION_FULL#*+}
+          
+          echo "✅ Validado: $APP_NAME v$VERSION_BASE (Build: $BUILD_NUMBER)"
+          
+          # Exportar al output del step
+          echo "APP_NAME=$APP_NAME" >> $GITHUB_OUTPUT
+          echo "VERSION=v$VERSION_BASE" >> $GITHUB_OUTPUT
+          echo "VERSION_TAG=v$VERSION_BASE-b$BUILD_NUMBER" >> $GITHUB_OUTPUT
+          echo "BUILD_NUMBER=$BUILD_NUMBER" >> $GITHUB_OUTPUT
 
       # 2. VERSION INCREMENT CHECK
       - name: 🔍 Verify Version Was Bumped
