@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../diagram/domain/entities/electrical_node.dart';
 import '../../../diagram/domain/services/tree_utilities.dart';
 import '../../domain/entities/field_measurement.dart';
-import '../../domain/extensions/field_measurement_ui_extension.dart';
+import '../extensions/field_measurement_ui_extension.dart';
 import '../../../../core/presentation/widgets/app_button.dart';
 import '../../../../core/presentation/widgets/coming_soon_dialog.dart';
 import '../../../../l10n/app_localizations.dart';
@@ -439,73 +439,107 @@ class ComponentDetailSheet extends StatelessWidget {
     String? status,
     Color? statusColor,
   }) {
+    final isLongValue = value.length > 30;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Expanded(
-            flex: 3,
-            child: Text(
-              label,
-              style: TextStyle(
-                color: textSecondary,
-                fontSize: 14,
-              ),
-            ),
-          ),
-          Expanded(
-            flex: 3,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+      child: isLongValue
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  value,
+                  label,
                   style: TextStyle(
-                    color: textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
+                    color: textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (unit.isNotEmpty) ...[
-                  const SizedBox(width: 4),
-                  Text(
-                    unit,
+                const SizedBox(height: 8),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: textPrimary.withValues(alpha: 0.05),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: textSecondary.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            color: textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          softWrap: true,
+                        ),
+                      ),
+                      if (unit.isNotEmpty) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          unit,
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  flex: 3,
+                  child: Text(
+                    label,
                     style: TextStyle(
                       color: textSecondary,
                       fontSize: 14,
                     ),
                   ),
-                ],
-                if (status != null) ...[
-                  const SizedBox(width: 8),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: statusColor?.withValues(alpha: 0.1) ??
-                          Colors.grey.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(4),
-                      border: Border.all(
-                          color: statusColor?.withValues(alpha: 0.5) ??
-                              Colors.transparent,
-                          width: 1),
-                    ),
-                    child: Text(
-                      status,
-                      style: TextStyle(
-                        color: statusColor ?? Colors.grey,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
+                ),
+                Expanded(
+                  flex: 3,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Flexible(
+                        child: Text(
+                          value,
+                          style: TextStyle(
+                            color: textPrimary,
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          softWrap: true,
+                          textAlign: TextAlign.end,
+                        ),
                       ),
-                    ),
+                      if (unit.isNotEmpty) ...[
+                        const SizedBox(width: 4),
+                        Text(
+                          unit,
+                          style: TextStyle(
+                            color: textSecondary,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ],
                   ),
-                ],
+                ),
               ],
             ),
-          ),
-        ],
-      ),
     );
   }
 

@@ -30,7 +30,7 @@
 <strong>Electrics-App</strong> no es solo una calculadora eléctrica. Es un <strong>Gemelo Digital</strong> diseñado para ingenieros e instaladores que necesitan precisión técnica y validación normativa (REBT/RAT) en tiempo real, sin necesidad de un ordenador.
 </p>
 
-> **⚠ AVISO ⚠**  
+> [!WARNING] 
 > Es ilegal el uso con fines lucrativos o comercial de este producto. Seguimos APGL-3.0. Lee la licencia.
 ---
 

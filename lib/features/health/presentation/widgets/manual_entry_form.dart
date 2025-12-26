@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../diagram/domain/entities/electrical_node.dart';
-import '../../../diagram/domain/entities/electrical_enums.dart'; // For ProtectionType
+import '../../../diagram/domain/entities/electrical_enums.dart';
 import '../../domain/entities/field_measurement.dart';
+import '../../domain/services/electrical_validation_service.dart';
 
+/// Manual measurement entry form for electrical components
 class ManualEntryForm extends StatefulWidget {
   final ElectricalNode node;
   final Function(FieldMeasurement) onSave;
@@ -24,6 +26,7 @@ enum _FormType { source, rcd, insulation, load, panel, generic }
 
 class _ManualEntryFormState extends State<ManualEntryForm> {
   final _uuid = const Uuid();
+  final _validationService = ElectricalValidationService();
   late _FormType _currentFormType;
   List<_FormType> _availableTypes = [];
 
@@ -47,7 +50,7 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
   // Controllers - Load (Zs)
   final _zsCtrl = TextEditingController();
   final _vLoadCtrl = TextEditingController();
-  final bool _polarityOk = false;
+  bool _polarityOk = false;
 
   // Controllers - Panel (Earth)
   final _raCtrl = TextEditingController();
@@ -189,15 +192,10 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
     final colorScheme = theme.colorScheme;
 
     final bgApp = theme.scaffoldBackgroundColor;
-
-    // Derive card color from theme to guarantee contrast regardless of specific theme config bugs
-    // This creates a slightly lighter version of background in dark mode, and slightly darker in light mode
-    // adhering STRICTLY to AppThemes base colors.
-    final bgCard =
-        Color.alphaBlend(colorScheme.onSurface.withValues(alpha: 0.08), bgApp);
+    final bgCard = colorScheme.surfaceContainerHighest;
 
     final textPrimary = colorScheme.onSurface;
-    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.6);
+    final textSecondary = colorScheme.onSurfaceVariant;
     final accentColor = theme.primaryColor;
 
     return Scaffold(
@@ -360,6 +358,11 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
   }
 
   Widget _buildRcdForm(Color bg, Color txt, Color sub) {
+    final sensitivity = widget.node.maybeMap(
+      protection: (p) => p.sensitivity,
+      orElse: () => 30.0,
+    );
+
     return Column(
       children: [
         _buildSectionTitle(
@@ -371,16 +374,37 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             cardBg: bg,
             textMain: txt,
             textSub: sub,
-            validator: (val) =>
-                (double.tryParse(val) ?? 0) > 300 ? "Fallo >300ms" : null),
-        const SizedBox(height: 12),
+            validator: (val) {
+              final time = double.tryParse(val) ?? 0;
+              return _validationService.validateRcdTripTime(time);
+            }),
         _buildInputCard(
-            label: "Corriente Disparo",
+            label:
+                "Corriente Disparo (IΔn: ${sensitivity.toStringAsFixed(0)}mA)",
             controller: _tripCurrentCtrl,
             suffix: "mA",
             cardBg: bg,
             textMain: txt,
-            textSub: sub),
+            textSub: sub,
+            validator: (val) {
+              final measured = double.tryParse(val) ?? 0;
+              return _validationService.validateRcdTripCurrent(
+                tripCurrent: measured,
+                sensitivity: sensitivity,
+              );
+            }),
+        _buildInputCard(
+          label: "Tensión Contacto (Uc)",
+          controller: _contactUbCtrl,
+          suffix: "V",
+          cardBg: bg,
+          textMain: txt,
+          textSub: sub,
+          validator: (val) {
+            final voltage = double.tryParse(val) ?? 0;
+            return _validationService.validateContactVoltage(voltage);
+          },
+        ),
         const SizedBox(height: 12),
         SwitchListTile(
           title: Text("Test Mecánico (Botón T)", style: TextStyle(color: txt)),
@@ -422,6 +446,11 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
   }
 
   Widget _buildLoadForm(Color bg, Color txt, Color sub) {
+    final loadType = widget.node.maybeMap(
+      load: (l) => l.type,
+      orElse: () => LoadType.power,
+    );
+
     return Column(
       children: [
         _buildSectionTitle("Impedancia Bucle (Zs)", Icons.loop, txt),
@@ -431,7 +460,11 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             suffix: "Ω",
             cardBg: bg,
             textMain: txt,
-            textSub: sub),
+            textSub: sub,
+            validator: (val) {
+              final zs = double.tryParse(val) ?? 0;
+              return _validationService.validateLoopImpedance(zs);
+            }),
         const SizedBox(height: 12),
         _buildInputCard(
             label: "Tensión en Carga",
@@ -440,8 +473,23 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             cardBg: bg,
             textMain: txt,
             textSub: sub,
-            validator: (val) =>
-                (double.tryParse(val) ?? 230) < 210 ? "Caída excesiva" : null),
+            validator: (val) {
+              final v = double.tryParse(val) ?? 230;
+              return _validationService.validateVoltageDrop(
+                measuredVoltage: v,
+                loadType: loadType,
+              );
+            }),
+        const SizedBox(height: 12),
+        SwitchListTile(
+          title: Text("Polaridad Correcta", style: TextStyle(color: txt)),
+          subtitle: Text("¿Fase en Fase, Neutro en Neutro?",
+              style: TextStyle(color: sub)),
+          value: _polarityOk,
+          onChanged: (v) => setState(() => _polarityOk = v),
+          activeThumbColor: Colors.green,
+          contentPadding: EdgeInsets.zero,
+        )
       ],
     );
   }
@@ -540,29 +588,25 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             style: TextStyle(
                 color: textMain, fontSize: 16, fontWeight: FontWeight.normal),
             keyboardType: keyboardType,
-            inputFormatters: allowText
-                ? []
-                : [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))
-                  ], // Added comma support just in case
+            inputFormatters: [
+              if (!allowText)
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+              TextInputFormatter.withFunction((oldValue, newValue) {
+                final text = newValue.text.replaceAll(',', '.');
+                return TextEditingValue(
+                  text: text,
+                  selection: newValue.selection,
+                );
+              }),
+            ],
             onChanged: (v) {
-              // Normalize comma to dot for parsing
-              if (v.contains(',')) {
-                final clean = v.replaceAll(',', '.');
-                if (clean != v) {
-                  controller.value = TextEditingValue(
-                    text: clean,
-                    selection: TextSelection.collapsed(offset: clean.length),
-                  );
-                }
-              }
               setState(() {});
             },
             decoration: InputDecoration(
+              filled: false,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: InputBorder.none,
-              // Suffix handled elegantly inside field
               suffixIcon: suffix.isNotEmpty
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,

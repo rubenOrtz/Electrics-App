@@ -43,6 +43,9 @@ import 'features/budget/domain/services/pricing_engine.dart';
 import 'features/budget/domain/services/material_aggregator_service.dart';
 import 'features/budget/presentation/cubit/budget_cubit.dart';
 import 'features/onboarding/presentation/bloc/onboarding_cubit.dart';
+import 'features/onboarding/data/models/onboarding_status_dto.dart';
+import 'features/settings/data/models/app_preferences_dto.dart';
+import 'features/onboarding/domain/usecases/save_onboarding_data_usecase.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/domain/usecases/initialize_app_usecase.dart';
 import 'core/presentation/bloc/app_state_cubit.dart';
@@ -57,6 +60,8 @@ Future<void> initializeDependencies() async {
     AppSettingsModelSchema,
     UserProfileModelSchema,
     ComponentModelSchema,
+    AppPreferencesDtoSchema,
+    OnboardingStatusDtoSchema,
   ]);
   sl.registerSingleton<IsarService>(isarService);
 
@@ -93,6 +98,9 @@ Future<void> initializeDependencies() async {
   sl.registerLazySingleton(() => SaveUserProfile(sl()));
   sl.registerLazySingleton(() => UpdateProfilePhoto(sl()));
   sl.registerLazySingleton(() => UpdateCompanyLogo(sl()));
+
+  // Onboarding Use Cases
+  sl.registerLazySingleton(() => SaveOnboardingDataUseCase(sl()));
 
   // Dio
   sl.registerSingleton<Dio>(Dio());
@@ -146,7 +154,7 @@ Future<void> initializeDependencies() async {
   sl.registerFactory(() => BudgetCubit(sl()));
 
   // Onboarding Feature
-  sl.registerFactory(() => OnboardingCubit(userProfileRepository: sl()));
+  sl.registerFactory(() => OnboardingCubit(saveDataUseCase: sl()));
 
   // Core Cubits
   sl.registerFactory<AppStateCubit>(

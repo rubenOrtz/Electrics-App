@@ -1,7 +1,9 @@
 import 'package:dartz/dartz.dart';
 import '../../../../core/error/failures.dart';
-import '../../../../config/theme/theme_cubit.dart';
 import '../entities/app_preferences.dart';
+import '../entities/app_theme_mode.dart';
+import '../entities/user_profile.dart';
+import '../../../onboarding/domain/entities/onboarding_preferences.dart';
 
 abstract class SettingsRepository {
   // ============================================================================
@@ -29,4 +31,10 @@ abstract class SettingsRepository {
 
   /// Sets the theme mode
   Future<Either<Failure, void>> setThemeMode(AppThemeMode mode);
+
+  /// Uses shared Isar instance for true transactional atomicity
+  Future<Either<Failure, void>> saveOnboardingDataTransaction({
+    required UserProfile profile,
+    required OnboardingPreferences preferences,
+  });
 }

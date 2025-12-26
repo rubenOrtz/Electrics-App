@@ -71,6 +71,17 @@ class ProfessionalTypeStep extends StatelessWidget {
   }) {
     final theme = Theme.of(context);
 
+    // Use subtler colors for better adaptation to light/dark modes
+    final borderColor =
+        isSelected ? theme.colorScheme.primary : theme.colorScheme.outline;
+    final backgroundColor = isSelected
+        ? theme.colorScheme.primary.withValues(alpha: 0.08)
+        : Colors.transparent;
+    final iconColor =
+        isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface;
+    final textColor =
+        isSelected ? theme.colorScheme.primary : theme.colorScheme.onSurface;
+
     return InkWell(
       onTap: () {
         context.read<OnboardingCubit>().updateProfessionalType(type);
@@ -80,24 +91,18 @@ class ProfessionalTypeStep extends StatelessWidget {
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
           border: Border.all(
-            color: isSelected
-                ? theme.colorScheme.primary
-                : theme.colorScheme.outline,
-            width: 2,
+            color: borderColor,
+            width: isSelected ? 2 : 1,
           ),
           borderRadius: BorderRadius.circular(12),
-          color: isSelected
-              ? theme.colorScheme.primaryContainer
-              : Colors.transparent,
+          color: backgroundColor,
         ),
         child: Row(
           children: [
             Icon(
               icon,
               size: 40,
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.onSurface,
+              color: iconColor,
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -108,11 +113,15 @@ class ProfessionalTypeStep extends StatelessWidget {
                     title,
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
+                      color: textColor,
                     ),
                   ),
+                  const SizedBox(height: 4),
                   Text(
                     description,
-                    style: theme.textTheme.bodyMedium,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                    ),
                   ),
                 ],
               ),

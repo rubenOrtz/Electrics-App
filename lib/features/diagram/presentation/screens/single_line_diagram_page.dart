@@ -5,11 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Domain
 import '../../domain/entities/electrical_node.dart';
-import '../../domain/entities/electrical_enums.dart'; // NodeType
+import '../../domain/services/tree_utilities.dart';
+import '../../domain/services/node_factory.dart';
+import '../../domain/entities/electrical_enums.dart';
 import '../../domain/entities/conductor_attributes.dart';
 import '../../domain/entities/diagram_models.dart'; // DiagramNode
-
-import '../../domain/services/tree_utilities.dart'; // Corrected Path
 
 // Presentation - BLoC
 import '../bloc/diagram_cubit.dart';
@@ -101,13 +101,7 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
 
     // Traverse tree and build visual nodes for each positioned node
     void traverse(ElectricalNode node) {
-      // Skip panel nodes (they are invisible containers)
-      final isPanel = node.maybeMap(
-        panel: (_) => true,
-        orElse: () => false,
-      );
-
-      if (!isPanel && positions.containsKey(node.id)) {
+      if (positions.containsKey(node.id)) {
         final type = _mapDomainTypeToVisual(node);
         final position = positions[node.id]!;
 
@@ -166,13 +160,14 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
       ],
       child: BlocConsumer<DiagramCubit, DiagramState>(
         listenWhen: (previous, current) {
-          // Listen for node changes to handle initial selection
           if (widget.initialSelectedNodeId != null &&
               current.root != null &&
               _selectedNode == null) {
             return true;
           }
-          return previous.root != null && current.root != previous.root;
+          return (previous.root != null && current.root != previous.root) ||
+              (previous.status != current.status &&
+                  current.status == DiagramStatus.ready);
         },
         listener: (context, state) {
           _handleStateChanges(context, state);
@@ -201,6 +196,7 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
                     onTabChanged: (index) {
                       setState(() => _selectedTab = index);
                     },
+                    isSelectionMode: widget.selectMode != SelectMode.none,
                   ),
 
                   // 2. Main Content Area
@@ -624,7 +620,7 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
 
   void _addChildToId(BuildContext context, String parentId, NodeType type) {
     final cubit = context.read<DiagramCubit>();
-    final newNode = _createNodeFromType(type);
+    final newNode = _createNodeFromType(context, type);
 
     // Estimate position (center of screen or offset)
     final pos = Offset(200, 200);
@@ -635,31 +631,29 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
   void _addRoot(BuildContext context, NodeType type) {
     final cubit = context.read<DiagramCubit>();
     if (cubit.state.root == null) {
-      cubit.setRoot(_createNodeFromType(type));
+      cubit.setRoot(_createNodeFromType(context, type));
     }
   }
 
-  ElectricalNode _createNodeFromType(NodeType type) {
+  ElectricalNode _createNodeFromType(BuildContext context, NodeType type) {
     final id = const Uuid().v4();
+    final l10n = AppLocalizations.of(context)!;
+    final factory = NodeFactory();
+
     switch (type) {
       case NodeType.supply:
-        return SourceNode(
-          id: id,
-          name: "Acometida",
-          nominalVoltage: 230,
-        );
+        return factory.createDefaultSource(id: id, name: l10n.acometida);
       case NodeType.panel:
-        return PanelNode(id: id, name: "Cuadro", children: []);
+        return factory.createDefaultPanel(id: id, name: l10n.panel);
       case NodeType.breaker:
-        return ProtectionNode(
-            id: id,
-            name: "PIA",
-            protectionType: ProtectionType.circuitBreaker,
-            ratingAmps: 16);
+        return factory.createDefaultBreaker(id: id, name: l10n.elemBreaker);
+      case NodeType.differential:
+        return factory.createDefaultDifferential(
+            id: id, name: l10n.elemDifferential);
       case NodeType.load:
-        return LoadNode(id: id, name: "Carga", powerWatts: 1000);
+        return factory.createDefaultLoad(id: id, name: l10n.elemLoad);
       default:
-        return LoadNode(id: id, name: "Genérico", powerWatts: 0);
+        return factory.createDefaultLoad(id: id, name: l10n.elemLoad);
     }
   }
 
@@ -734,7 +728,7 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
           if (latestNode is LoadNode) {
             return CircuitConfigSheet(
               initialData: CircuitConfigData(
-                type: LoadType.power,
+                type: latestNode.type,
                 isThreePhase: latestNode.isThreePhase,
                 powerKw: latestNode.powerWatts / 1000,
                 cosPhi: latestNode.cosPhi,
@@ -771,6 +765,7 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
                   return n.copyWith(
                       powerWatts: data.powerKw * 1000,
                       cosPhi: data.cosPhi,
+                      type: data.type,
                       isThreePhase: data.isThreePhase,
                       inputCable: updatedCable,
                       cableCatalogData: data.cableCatalogData);

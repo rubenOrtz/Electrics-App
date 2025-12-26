@@ -34,12 +34,13 @@ class AppRouteObserver extends RouteObserver<PageRoute<dynamic>> {
     Route<dynamic> route,
     Route<dynamic>? previousRoute,
   ) {
-    final routeName = route.settings.name ?? 'Unknown';
-    final previousRouteName = previousRoute?.settings.name ?? 'None';
-
-    debugPrint(
-      '🧭 Navigation [$action]: $routeName (from: $previousRouteName)',
-    );
+    // Debug logging for development - stripped in release builds
+    if (route.settings.name != null) {
+      debugPrint(
+        '🧭 Navigation [$action]: ${route.settings.name} '
+        '${previousRoute?.settings.name != null ? "from ${previousRoute?.settings.name}" : ""}',
+      );
+    }
   }
 }
 

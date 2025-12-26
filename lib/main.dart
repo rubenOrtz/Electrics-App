@@ -5,6 +5,7 @@ import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:electrician_app/l10n/app_localizations.dart';
 import 'package:electrician_app/config/routes/routes.dart';
 import 'package:electrician_app/config/theme/app_themes.dart';
+import 'package:electrician_app/features/settings/domain/entities/app_theme_mode.dart';
 
 import 'package:electrician_app/config/theme/theme_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -301,7 +302,7 @@ class MyApp extends StatelessWidget {
 /// if initialization takes too long
 class _InitializationTimeoutWrapper extends StatefulWidget {
   final Widget child;
-  
+
   const _InitializationTimeoutWrapper({required this.child});
 
   @override
@@ -313,7 +314,7 @@ class _InitializationTimeoutWrapperState
     extends State<_InitializationTimeoutWrapper> {
   /// Maximum time to wait for initialization before showing timeout error
   static const Duration _initializationTimeout = Duration(seconds: 30);
-  
+
   /// Timer for tracking the initialization timeout
   Timer? _timeoutTimer;
 

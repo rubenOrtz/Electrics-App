@@ -22,18 +22,11 @@ class AutoLayoutService {
 
     // Phase 1: Calculate subtree widths (bottom-up)
     double calculateWidth(ElectricalNode node) {
-      final isPanel = node.maybeMap(
-        panel: (_) => true,
-        orElse: () => false,
-      );
-
       final children = _getChildren(node);
 
       if (children.isEmpty) {
-        // Panels with no children = no width
-        final w = isPanel ? 0.0 : nodeW;
-        subtreeWidths[node.id] = w;
-        return w;
+        subtreeWidths[node.id] = nodeW;
+        return nodeW;
       }
 
       double width = 0;
@@ -42,8 +35,7 @@ class AutoLayoutService {
       }
       width += (children.length - 1) * siblingGap;
 
-      // Panels are transparent - just return children's width
-      final myW = isPanel ? width : (width > nodeW ? width : nodeW);
+      final myW = (width > nodeW ? width : nodeW);
       subtreeWidths[node.id] = myW;
       return myW;
     }
@@ -52,40 +44,28 @@ class AutoLayoutService {
 
     // Phase 2: Assign positions (top-down)
     void assignPosition(ElectricalNode node, double x, double y) {
-      final isPanel = node.maybeMap(
-        panel: (_) => true,
-        orElse: () => false,
-      );
-
       final myWidth = subtreeWidths[node.id]!;
       final centeredX = x + (myWidth - nodeW) / 2;
 
-      // Skip position assignment for Panels (invisible containers)
-      if (!isPanel) {
-        positions[node.id] = Offset(centeredX, y);
-      }
+      // Ensure every node gets a position (including Panels)
+      positions[node.id] = Offset(centeredX, y);
 
       final children = _getChildren(node);
       if (children.isEmpty) return;
 
-      // Panels place children at same Y level
-      final childY = isPanel ? y : y + levelHeight;
+      final childY = y + levelHeight;
 
-      // Center children distribution
-      double currentX;
-      if (isPanel) {
-        // Calculate total width of children
-        double totalChildrenWidth = 0;
-        for (var child in children) {
-          totalChildrenWidth += subtreeWidths[child.id]!;
-        }
-        totalChildrenWidth += (children.length - 1) * siblingGap;
-
-        // Center under parent
-        currentX = x + (myWidth - totalChildrenWidth) / 2;
-      } else {
-        currentX = x;
+      // Force Center children distribution
+      double totalChildrenWidth = 0;
+      for (var child in children) {
+        totalChildrenWidth += subtreeWidths[child.id]!;
       }
+      if (children.length > 1) {
+        totalChildrenWidth += (children.length - 1) * siblingGap;
+      }
+
+      // Start X for children (Centered under parent's allocated width)
+      double currentX = x + (myWidth - totalChildrenWidth) / 2;
 
       for (var child in children) {
         assignPosition(child, currentX, childY);
@@ -175,9 +155,13 @@ class AutoLayoutService {
           }
 
           if (minX != double.infinity) {
-            // Add padding for panel container
-            panelRects[node.id] =
-                Rect.fromLTRB(minX - 40, minY - 20, maxX + 40, maxY + 60);
+            const double padding = 20.0;
+            panelRects[node.id] = Rect.fromLTRB(
+              minX - padding,
+              minY - padding - kPanelHeaderHeight,
+              maxX + padding,
+              maxY + padding,
+            );
           }
         }
       } else {

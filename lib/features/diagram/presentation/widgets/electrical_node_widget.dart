@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'; // For Haptics
 import '../../domain/entities/electrical_node.dart';
+import '../../domain/entities/electrical_enums.dart'; // For LoadType
 import '../../domain/entities/validation_status.dart';
 import '../../domain/entities/diagram_models.dart';
 import 'diagnostic_sheet.dart';
@@ -250,9 +251,7 @@ class _ElectricalNodeWidgetState extends State<ElectricalNodeWidget>
                   ],
                 ),
                 child: Icon(
-                  loadNode.powerWatts > 2000
-                      ? Icons.power
-                      : Icons.lightbulb_outline,
+                  _getLoadIcon(loadNode),
                   color: status == ValidationStatus.error
                       ? Colors.redAccent
                       : status == ValidationStatus.warning
@@ -430,6 +429,17 @@ class _ElectricalNodeWidgetState extends State<ElectricalNodeWidget>
         return Colors.orange;
       default:
         return theme.accentColor;
+    }
+  }
+
+  IconData _getLoadIcon(LoadNode node) {
+    switch (node.type) {
+      case LoadType.motor:
+        return Icons.settings;
+      case LoadType.power:
+        return Icons.power;
+      case LoadType.lighting:
+        return Icons.lightbulb_outline;
     }
   }
 

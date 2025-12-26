@@ -5,9 +5,10 @@ class DiagramTopBar extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onBackPressed;
-  final int selectedTab; // 0: Diagram, 1: Health
+  final int selectedTab; // 0: Diagram, 1: Health, 2: Budget
   final VoidCallback onBudgetPressed;
   final Function(int) onTabChanged;
+  final bool isSelectionMode;
 
   const DiagramTopBar({
     Key? key,
@@ -17,6 +18,7 @@ class DiagramTopBar extends StatelessWidget {
     required this.selectedTab,
     required this.onBudgetPressed,
     required this.onTabChanged,
+    this.isSelectionMode = false,
   }) : super(key: key);
 
   @override
@@ -81,40 +83,42 @@ class DiagramTopBar extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(width: 12),
-          // Tab Icons (Diagram / Health)
-          _buildActionButton(
-            icon: Icons.account_tree_outlined,
-            color: selectedTab == 0
-                ? diagramTheme.accentColor
-                : diagramTheme.textColor.withValues(alpha: 0.4),
-            onPressed: () => onTabChanged(0),
-            theme: diagramTheme,
-            isActive: selectedTab == 0,
-          ),
-          const SizedBox(width: 8),
-          _buildActionButton(
-            icon: Icons.health_and_safety_outlined,
-            color: selectedTab == 1
-                ? diagramTheme.accentColor
-                : diagramTheme.textColor.withValues(alpha: 0.4),
-            onPressed: () => onTabChanged(1),
-            theme: diagramTheme,
-            isActive: selectedTab == 1,
-          ),
+          if (!isSelectionMode) ...[
+            const SizedBox(width: 12),
+            // Tab Icons (Diagram / Health)
+            _buildActionButton(
+              icon: Icons.account_tree_outlined,
+              color: selectedTab == 0
+                  ? diagramTheme.accentColor
+                  : diagramTheme.textColor.withValues(alpha: 0.4),
+              onPressed: () => onTabChanged(0),
+              theme: diagramTheme,
+              isActive: selectedTab == 0,
+            ),
+            const SizedBox(width: 8),
+            _buildActionButton(
+              icon: Icons.health_and_safety_outlined,
+              color: selectedTab == 1
+                  ? diagramTheme.accentColor
+                  : diagramTheme.textColor.withValues(alpha: 0.4),
+              onPressed: () => onTabChanged(1),
+              theme: diagramTheme,
+              isActive: selectedTab == 1,
+            ),
 
-          const SizedBox(width: 8),
+            const SizedBox(width: 8),
 
-          // Budget Button
-          _buildActionButton(
-            icon: Icons.euro_symbol,
-            color: selectedTab == 2
-                ? diagramTheme.accentColor
-                : diagramTheme.textColor.withValues(alpha: 0.4),
-            onPressed: onBudgetPressed,
-            theme: diagramTheme,
-            isActive: selectedTab == 2,
-          ),
+            // Budget Button
+            _buildActionButton(
+              icon: Icons.euro_symbol,
+              color: selectedTab == 2
+                  ? diagramTheme.accentColor
+                  : diagramTheme.textColor.withValues(alpha: 0.4),
+              onPressed: onBudgetPressed,
+              theme: diagramTheme,
+              isActive: selectedTab == 2,
+            ),
+          ],
         ],
       ),
     );

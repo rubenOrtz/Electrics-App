@@ -179,6 +179,8 @@ _$LoadNodeDtoImpl _$$LoadNodeDtoImplFromJson(Map<String, dynamic> json) =>
               json['assetMetadata'] as Map<String, dynamic>),
       powerWatts: (json['powerWatts'] as num?)?.toDouble() ?? 3000,
       cosPhi: (json['cosPhi'] as num?)?.toDouble() ?? 0.9,
+      type: $enumDecodeNullable(_$LoadTypeEnumMap, json['type']) ??
+          LoadType.power,
       isThreePhase: json['isThreePhase'] as bool? ?? false,
       cableCatalogData: json['cableCatalogData'] == null
           ? null
@@ -197,7 +199,14 @@ Map<String, dynamic> _$$LoadNodeDtoImplToJson(_$LoadNodeDtoImpl instance) =>
       'assetMetadata': instance.assetMetadata,
       'powerWatts': instance.powerWatts,
       'cosPhi': instance.cosPhi,
+      'type': _$LoadTypeEnumMap[instance.type]!,
       'isThreePhase': instance.isThreePhase,
       'cableCatalogData': instance.cableCatalogData,
       'runtimeType': instance.$type,
     };
+
+const _$LoadTypeEnumMap = {
+  LoadType.lighting: 'lighting',
+  LoadType.power: 'power',
+  LoadType.motor: 'motor',
+};

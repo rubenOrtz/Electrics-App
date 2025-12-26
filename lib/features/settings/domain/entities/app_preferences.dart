@@ -1,4 +1,4 @@
-import '../../../../config/theme/theme_cubit.dart';
+import 'app_theme_mode.dart';
 
 /// Enum representing text size preference
 enum TextSizePreference {

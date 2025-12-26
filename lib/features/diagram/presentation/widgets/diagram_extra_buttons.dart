@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../config/theme/theme_cubit.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:electrician_app/features/settings/domain/entities/app_theme_mode.dart';
 
 /// Left-side zoom buttons (+/-, vertical layout) matching reference design
 class DiagramZoomButtons extends StatelessWidget {
