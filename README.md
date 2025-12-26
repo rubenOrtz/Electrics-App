@@ -1,15 +1,37 @@
+<h1 align="center">
+  <img src="assets/logo.png" width="45" style="vertical-align:middle">
+  ⚡ Electrics-App: El Gemelo Digital en tu bolsillo
+</h1>
+
+<p align="center">
+  <strong>Cálculo, diseño y normativa unificado bajo el REBT.</strong><br>
+  <em>"Deja el Excel para la oficina. Lleva la ingeniería al campo de trabajo."</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/rubenOrtz/Electrics-App/releases">
+    <img src="https://img.shields.io/github/v/release/rubenOrtz/Electrics-App?include_prereleases&sort=date&display_name=release&style=for-the-badge" alt="Release">
+  </a>
+  
+  <a href="https://github.com/rubenOrtz/Electrics-App/actions">
+    <img src="https://img.shields.io/github/actions/workflow/status/rubenOrtz/Electrics-App/release.yml?branch=main&style=for-the-badge&logo=github&label=CI%20BUILD&color=success" alt="CI Status">
+  </a>
+
+  <a href="https://flutter.dev">
+    <img src="https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white" alt="Flutter">
+  </a>
+
+  <a href="LICENSE">
+    <img src="https://img.shields.io/github/license/rubenOrtz/Electrics-App?style=for-the-badge" alt="License">
+  </a>
+</p>
+
+<p align="center">
+<strong>Electrics-App</strong> no es solo una calculadora eléctrica. Es un <strong>Gemelo Digital</strong> diseñado para ingenieros e instaladores que necesitan precisión técnica y validación normativa (REBT/RAT) en tiempo real, sin necesidad de un ordenador.
+</p>
+
 > **⚠ AVISO ⚠**  
 > Es ilegal el uso con fines lucrativos o comercial de este producto. Seguimos APGL-3.0. Lee la licencia.
-# ⚡ Electrics-App: El Gemelo Digital en tu bolsillo
-
-[![Release](https://img.shields.io/github/v/release/rubenOrtz/Electrics-App?include_prereleases&sort=date&display_name=release&style=for-the-badge)](https://github.com/rubenOrtz/Electrics-App/releases)
-[![Flutter](https://img.shields.io/badge/Flutter-%2302569B.svg?style=for-the-badge&logo=Flutter&logoColor=white)](https://flutter.dev)
-[![License](https://img.shields.io/github/license/rubenOrtz/Electrics-App?style=for-the-badge)](LICENSE)
-
-> **"Deja el Excel para la oficina. Lleva la ingeniería al campo de trabajo."**
-
-**Electrics-App** no es solo una calculadora eléctrica. Es un **Gemelo Digital** diseñado para ingenieros e instaladores que necesitan precisión técnica y validación normativa (REBT/RAT) en tiempo real, sin necesidad de un ordenador.
-
 ---
 
 ## 🛠️ ¿Por qué Electrics-App?
