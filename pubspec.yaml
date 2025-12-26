@@ -46,6 +46,9 @@ dependencies:
   #Hooks
   flutter_hooks: ^0.21.3+1
 
+  #icon
+  flutter_launcher_icons: ^0.14.4
+
   #chached image 
   cached_network_image: ^3.3.1
   google_fonts: ^6.3.3
@@ -64,6 +67,7 @@ dependencies:
   json_annotation: ^4.8.1
   fl_chart: ^1.1.1
   shared_preferences: ^2.3.3
+  flutter_native_splash: ^2.4.7
 
 dev_dependencies:
   flutter_test:
