@@ -86,40 +86,13 @@ class MyApp extends StatelessWidget {
     );
   }
 
-  /// Loading state UI - shown during initialization
+  /// Loading state UI - keep native splash visible during initialization
+  /// Returns an empty container to let the native splash screen remain visible
+  /// This ensures the splash is not covered by a MaterialApp widget
   Widget _buildLoadingApp(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-      ],
-      supportedLocales: const [Locale('es'), Locale('en')],
-      home: Scaffold(
-        backgroundColor: kPrimaryColor,
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                strokeWidth: 3.0,
-              ),
-              const SizedBox(height: 24),
-              Text(
-                AppLocalizations.of(context)?.initializing ??
-                    'Inicializando...',
-                style: TextStyle(
-                  color: Colors.white.withValues(alpha: 0.9),
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+    // Don't remove the splash or render anything over it
+    // The native splash screen will remain visible during initialization
+    return const SizedBox.shrink();
   }
 
   /// Error state UI - shown when initialization fails
