@@ -3,13 +3,27 @@ import '../../../diagram/domain/entities/electrical_enums.dart';
 /// Domain service for electrical validation according to REBT/IEC standards.
 /// Encapsulates business rules for voltage drops, impedance limits, and protection coordination.
 ///
-/// **Usage:** All methods are static - call directly without instantiation.
-/// Example: `ElectricalValidationService.validateVoltageDrop(...)`
+/// **Architecture:** Singleton pattern for easy testing and dependency injection.
+/// **Usage:**
+/// ```dart
+/// final service = ElectricalValidationService();
+/// final error = service.validateVoltageDrop(...);
+/// ```
+///
+/// **Testing:** Can be mocked by creating a test implementation of this class.
 class ElectricalValidationService {
-  // Private constructor to prevent instantiation
-  ElectricalValidationService._();
+  // Singleton instance
+  static final ElectricalValidationService _instance =
+      ElectricalValidationService._internal();
 
-  // REBT Voltage Drop Limits
+  /// Factory constructor returns singleton instance
+  factory ElectricalValidationService() => _instance;
+
+  /// Private constructor for singleton pattern
+  ElectricalValidationService._internal();
+
+  // REBT Voltage Drop Limits (Interior Installations)
+  // Note: Different limits apply for sub-main lines (Acometidas)
   static const double _lightingDropPercent = 0.03; // 3% for lighting
   static const double _powerDropPercent = 0.05; // 5% for power loads
 
@@ -21,7 +35,9 @@ class ElectricalValidationService {
 
   /// Validates voltage drop for a given load type.
   /// Returns error message if invalid, null if valid.
-  static String? validateVoltageDrop({
+  ///
+  /// **Context:** These limits are for interior installations per REBT.
+  String? validateVoltageDrop({
     required double measuredVoltage,
     required LoadType loadType,
     double nominalVoltage = _nominalVoltage,
@@ -43,7 +59,7 @@ class ElectricalValidationService {
 
   /// Validates loop impedance (Zs).
   /// Returns error message if invalid, null if valid.
-  static String? validateLoopImpedance(double impedance) {
+  String? validateLoopImpedance(double impedance) {
     if (impedance <= 0) {
       return "Inválido (<=0)";
     }
@@ -57,7 +73,7 @@ class ElectricalValidationService {
 
   /// Validates RCD trip current against sensitivity.
   /// Returns error message if invalid, null if valid.
-  static String? validateRcdTripCurrent({
+  String? validateRcdTripCurrent({
     required double tripCurrent,
     required double sensitivity,
   }) {
@@ -70,7 +86,7 @@ class ElectricalValidationService {
 
   /// Validates RCD trip time.
   /// Returns error message if invalid, null if valid.
-  static String? validateRcdTripTime(double tripTime) {
+  String? validateRcdTripTime(double tripTime) {
     const maxTripTime = 300.0; // milliseconds
 
     if (tripTime > maxTripTime) {
@@ -82,7 +98,7 @@ class ElectricalValidationService {
 
   /// Validates contact voltage (touch voltage).
   /// Returns error message if invalid, null if valid.
-  static String? validateContactVoltage(double voltage) {
+  String? validateContactVoltage(double voltage) {
     const maxSafeVoltage = 50.0; // V
 
     if (voltage > maxSafeVoltage) {
@@ -93,7 +109,7 @@ class ElectricalValidationService {
   }
 
   /// Gets the allowed voltage drop percentage for a load type.
-  static double _getAllowedDropPercent(LoadType loadType) {
+  double _getAllowedDropPercent(LoadType loadType) {
     switch (loadType) {
       case LoadType.lighting:
         return _lightingDropPercent;
@@ -104,7 +120,7 @@ class ElectricalValidationService {
   }
 
   /// Gets minimum acceptable voltage for a load type.
-  static double getMinVoltage({
+  double getMinVoltage({
     required LoadType loadType,
     double nominalVoltage = _nominalVoltage,
   }) {
@@ -113,7 +129,7 @@ class ElectricalValidationService {
   }
 
   /// Gets maximum acceptable voltage.
-  static double getMaxVoltage({double nominalVoltage = _nominalVoltage}) {
+  double getMaxVoltage({double nominalVoltage = _nominalVoltage}) {
     return nominalVoltage * 1.10;
   }
 }

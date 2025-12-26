@@ -51,25 +51,24 @@ class SpanishDocumentValidator {
     }
   }
 
-  /// Validates Spanish Engineer ID (Nº Colegiado)
-  /// Format: COITI/COGITI provincial codes (e.g., "MAD-12345" or "12345-MAD")
+  /// Validates Spanish Engineer ID (Colegiado).
+  ///
+  /// **Format:** COITI/COGITI standard format
+  /// - Provincial: "MAD-12345", "BCN-54321" (2-3 letter province + hyphen + 3-10 digits)
+  /// - Alternative: Letters followed by digits "ABC12345"
+  ///
+  /// **Examples:**
+  /// - ✅ Valid: "MAD-12345", "BCN-987", "COITI-12345", "ABC1234"
+  /// - ❌ Invalid: "---123", "ABC", "12345" (no letters), "A-B-C-1-2-3"
   static bool isValidEngineerID(String engineerId) {
     if (engineerId.isEmpty) return false;
 
-    // Common formats:
-    // - Provincial: "MAD-12345", "BCN-54321"
-    // - National: "12345" (legacy)
-    // - COGITI: Prefix + number (varies by province)
+    // Strict format: Province code (2-5 letters) + hyphen + 3-10 digits
+    // OR: Letters (2-5) followed directly by 3-10 digits
+    final strictFormat = RegExp(r'^[A-Z]{2,5}-\d{3,10}$');
+    final alternateFormat = RegExp(r'^[A-Z]{2,5}\d{3,10}$');
 
-    // Basic validation: contains digits and optional province code
-    final hasDigits = RegExp(r'\d+').hasMatch(engineerId);
-    if (!hasDigits) return false;
-
-    // Extract numeric part
-    final numericPart = engineerId.replaceAll(RegExp(r'[^0-9]'), '');
-    if (numericPart.isEmpty || numericPart.length < 3) return false;
-
-    // Valid if has minimum 3 digits and reasonable length
-    return engineerId.length >= 3 && engineerId.length <= 20;
+    return strictFormat.hasMatch(engineerId.toUpperCase()) ||
+        alternateFormat.hasMatch(engineerId.toUpperCase());
   }
 }

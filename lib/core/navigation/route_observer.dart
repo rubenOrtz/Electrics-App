@@ -38,7 +38,7 @@ class AppRouteObserver extends RouteObserver<PageRoute<dynamic>> {
     if (route.settings.name != null) {
       debugPrint(
         '🧭 Navigation [$action]: ${route.settings.name} '
-        '${previousRoute?.settings.name != null ? "from ${previousRoute.settings.name}" : ""}',
+        '${previousRoute?.settings.name != null ? "from ${previousRoute?.settings.name}" : ""}',
       );
     }
   }
