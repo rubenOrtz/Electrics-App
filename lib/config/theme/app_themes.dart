@@ -230,7 +230,7 @@ ThemeData dynamicDarkTheme(ColorScheme? darkColorScheme) {
   );
 }
 
-// ... (appBarTheme and inputDecorationTheme unchanged) ...
+// ... helper theme definitions (e.g., appBarTheme, inputDecorationTheme) ...
 
 TextTheme textTheme() {
   final displayFont = GoogleFonts.spaceGrotesk;
