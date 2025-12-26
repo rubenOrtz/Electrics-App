@@ -174,7 +174,7 @@ class MyApp extends StatelessWidget {
                   const SizedBox(height: 32),
                   ElevatedButton.icon(
                     onPressed: () =>
-                        context.read<AppStateCubit>().retryInitialization(),
+                        context.read<AppStateCubit>().initializeApp(),
                     icon: const Icon(Icons.refresh),
                     label: Text(
                         AppLocalizations.of(context)?.retry ?? 'Reintentar'),
