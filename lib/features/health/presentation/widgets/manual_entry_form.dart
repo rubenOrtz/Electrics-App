@@ -11,11 +11,13 @@ import '../../domain/services/electrical_validation_service.dart';
 class ManualEntryForm extends StatefulWidget {
   final ElectricalNode node;
   final Function(FieldMeasurement) onSave;
+  final ElectricalValidationService? validationService;
 
   const ManualEntryForm({
     Key? key,
     required this.node,
     required this.onSave,
+    this.validationService,
   }) : super(key: key);
 
   @override
@@ -26,7 +28,7 @@ enum _FormType { source, rcd, insulation, load, panel, generic }
 
 class _ManualEntryFormState extends State<ManualEntryForm> {
   final _uuid = const Uuid();
-  final _validationService = ElectricalValidationService();
+  late final ElectricalValidationService _validationService;
   late _FormType _currentFormType;
   List<_FormType> _availableTypes = [];
 
@@ -62,6 +64,8 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
   @override
   void initState() {
     super.initState();
+    _validationService =
+        widget.validationService ?? ElectricalValidationService();
     _determineAvailableTypes();
   }
 

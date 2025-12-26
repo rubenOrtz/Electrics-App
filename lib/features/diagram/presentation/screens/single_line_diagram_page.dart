@@ -643,28 +643,28 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
       case NodeType.supply:
         return SourceNode(
           id: id,
-          name: "Acometida",
+          name: l10n.acometida,
           nominalVoltage: 230,
         );
       case NodeType.panel:
-        return PanelNode(id: id, name: "Cuadro", children: []);
+        return PanelNode(id: id, name: l10n.panel, children: []);
       case NodeType.breaker:
         return ProtectionNode(
             id: id,
-            name: "PIA",
+            name: l10n.elemBreaker,
             protectionType: ProtectionType.circuitBreaker,
             ratingAmps: 16);
       case NodeType.differential:
         return ProtectionNode(
             id: id,
-            name: "Dif",
+            name: l10n.elemDifferential,
             protectionType: ProtectionType.differential,
             ratingAmps: 40,
             sensitivity: 30.0);
       case NodeType.load:
         return LoadNode(id: id, name: l10n.power, powerWatts: 1000);
       default:
-        return LoadNode(id: id, name: "Genérico", powerWatts: 0);
+        return LoadNode(id: id, name: l10n.elemLoad, powerWatts: 0);
     }
   }
 
