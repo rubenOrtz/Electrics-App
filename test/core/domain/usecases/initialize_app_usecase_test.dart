@@ -1,5 +1,4 @@
 import 'package:dartz/dartz.dart';
-import 'package:electrician_app/core/domain/entities/app_initialization_result.dart';
 import 'package:electrician_app/core/domain/usecases/initialize_app_usecase.dart';
 import 'package:electrician_app/features/components/domain/repositories/component_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -203,7 +202,8 @@ void main() {
           executionOrder.add('hasSeedData');
           return false;
         });
-        when(() => mockComponentRepository.loadSeedData()).thenAnswer((_) async {
+        when(() => mockComponentRepository.loadSeedData())
+            .thenAnswer((_) async {
           executionOrder.add('loadSeedData');
           return const Right(null);
         });
