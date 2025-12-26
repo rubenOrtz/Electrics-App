@@ -83,7 +83,9 @@ class MyApp extends StatelessWidget {
   Widget _buildLoadingApp(BuildContext context) {
     // Don't remove the splash or render anything over it
     // The native splash screen will remain visible during initialization
-    return const SizedBox.shrink();
+    return _InitializationTimeoutWrapper(
+      child: const SizedBox.shrink(),
+    );
   }
 
   /// Error state UI - shown when initialization fails
@@ -289,5 +291,42 @@ class MyApp extends StatelessWidget {
       case AppThemeMode.dynamic:
         return ThemeMode.system;
     }
+  }
+}
+
+/// Wrapper widget that monitors initialization time and triggers error state
+/// if initialization takes too long
+class _InitializationTimeoutWrapper extends StatefulWidget {
+  final Widget child;
+  
+  const _InitializationTimeoutWrapper({required this.child});
+
+  @override
+  State<_InitializationTimeoutWrapper> createState() =>
+      _InitializationTimeoutWrapperState();
+}
+
+class _InitializationTimeoutWrapperState
+    extends State<_InitializationTimeoutWrapper> {
+  /// Maximum time to wait for initialization before showing timeout error
+  static const Duration _initializationTimeout = Duration(seconds: 30);
+
+  @override
+  void initState() {
+    super.initState();
+    _startTimeoutMonitor();
+  }
+
+  void _startTimeoutMonitor() {
+    Future.delayed(_initializationTimeout, () {
+      if (mounted) {
+        context.read<AppStateCubit>().handleInitializationTimeout();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return widget.child;
   }
 }
