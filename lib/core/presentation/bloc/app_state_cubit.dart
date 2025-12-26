@@ -91,11 +91,6 @@ class AppStateCubit extends Cubit<AppState> {
     }
   }
 
-  /// Retry initialization after failure
-  Future<void> retryInitialization() async {
-    await initializeApp();
-  }
-
   /// Check app initialization state and determine initial route
   /// @deprecated Use initializeApp() instead - this method is kept for compatibility
   Future<void> checkAppStatus() async {
