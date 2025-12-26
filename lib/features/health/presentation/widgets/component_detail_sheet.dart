@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../diagram/domain/entities/electrical_node.dart';
 import '../../../diagram/domain/services/tree_utilities.dart';
 import '../../domain/entities/field_measurement.dart';
-import '../../domain/extensions/field_measurement_ui_extension.dart';
+import '../extensions/field_measurement_ui_extension.dart';
 import '../../../../core/presentation/widgets/app_button.dart';
 import '../../../../core/presentation/widgets/coming_soon_dialog.dart';
 import '../../../../l10n/app_localizations.dart';

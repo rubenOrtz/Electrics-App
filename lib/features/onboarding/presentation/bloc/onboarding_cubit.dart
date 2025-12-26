@@ -325,6 +325,9 @@ class OnboardingCubit extends Cubit<OnboardingState> {
 
   UserProfile _buildUserProfile() {
     return UserProfile(
+      // ID '1' is intentional: UserProfile uses singleton pattern in repository
+      // (see UserProfileModel/UserProfileDto with Isar Id id = 0)
+      // This ensures only one user profile exists per app instance
       id: '1',
       personalName: state.personalName ?? '',
       personalEmail: state.personalEmail ?? '',

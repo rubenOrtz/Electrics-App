@@ -3,10 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:uuid/uuid.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../diagram/domain/entities/electrical_node.dart';
-import '../../../diagram/domain/entities/electrical_enums.dart'; // For ProtectionType
+import '../../../diagram/domain/entities/electrical_enums.dart';
 import '../../domain/entities/field_measurement.dart';
+import '../../domain/services/electrical_validation_service.dart';
 
-// TODO: Move logic to bloc
+/// Manual measurement entry form for electrical components
 class ManualEntryForm extends StatefulWidget {
   final ElectricalNode node;
   final Function(FieldMeasurement) onSave;
@@ -25,6 +26,7 @@ enum _FormType { source, rcd, insulation, load, panel, generic }
 
 class _ManualEntryFormState extends State<ManualEntryForm> {
   final _uuid = const Uuid();
+  final _validationService = ElectricalValidationService();
   late _FormType _currentFormType;
   List<_FormType> _availableTypes = [];
 
@@ -372,9 +374,10 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             cardBg: bg,
             textMain: txt,
             textSub: sub,
-            validator: (val) =>
-                (double.tryParse(val) ?? 0) > 300 ? "Fallo >300ms" : null),
-        const SizedBox(height: 12),
+            validator: (val) {
+              final time = double.tryParse(val) ?? 0;
+              return _validationService.validateRcdTripTime(time);
+            }),
         _buildInputCard(
             label:
                 "Corriente Disparo (IΔn: ${sensitivity.toStringAsFixed(0)}mA)",
@@ -385,12 +388,11 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             textSub: sub,
             validator: (val) {
               final measured = double.tryParse(val) ?? 0;
-              if (measured > sensitivity) {
-                return "Fallo > ${sensitivity.toStringAsFixed(0)}mA";
-              }
-              return null;
+              return _validationService.validateRcdTripCurrent(
+                tripCurrent: measured,
+                sensitivity: sensitivity,
+              );
             }),
-        const SizedBox(height: 12),
         _buildInputCard(
           label: "Tensión Contacto (Uc)",
           controller: _contactUbCtrl,
@@ -398,8 +400,10 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
           cardBg: bg,
           textMain: txt,
           textSub: sub,
-          validator: (val) =>
-              (double.tryParse(val) ?? 0) > 50 ? "Peligro >50V" : null,
+          validator: (val) {
+            final voltage = double.tryParse(val) ?? 0;
+            return _validationService.validateContactVoltage(voltage);
+          },
         ),
         const SizedBox(height: 12),
         SwitchListTile(
@@ -442,16 +446,10 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
   }
 
   Widget _buildLoadForm(Color bg, Color txt, Color sub) {
-    final double nominalV =
-        widget.node.maybeMap(load: (l) => 230.0, orElse: () => 230.0) ?? 230.0;
-
-    final bool isLighting = widget.node.maybeMap(
-      load: (l) => l.type == LoadType.lighting,
-      orElse: () => false,
+    final loadType = widget.node.maybeMap(
+      load: (l) => l.type,
+      orElse: () => LoadType.power,
     );
-
-    final double allowedDropPercent = isLighting ? 0.03 : 0.05;
-    final double minVoltage = nominalV * (1.0 - allowedDropPercent);
 
     return Column(
       children: [
@@ -465,9 +463,7 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             textSub: sub,
             validator: (val) {
               final zs = double.tryParse(val) ?? 0;
-              if (zs <= 0) return "Inválido (<=0)";
-              if (zs > 200) return "Verificar (>200Ω)";
-              return null;
+              return _validationService.validateLoopImpedance(zs);
             }),
         const SizedBox(height: 12),
         _buildInputCard(
@@ -479,15 +475,10 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             textSub: sub,
             validator: (val) {
               final v = double.tryParse(val) ?? 230;
-              final maxVoltage = nominalV * 1.10;
-
-              if (v < minVoltage) {
-                return "Caída > ${allowedDropPercent * 100}% (<${minVoltage.toStringAsFixed(1)}V)";
-              }
-              if (v > maxVoltage) {
-                return "Sobretensión (>${maxVoltage.toStringAsFixed(1)}V)";
-              }
-              return null;
+              return _validationService.validateVoltageDrop(
+                measuredVoltage: v,
+                loadType: loadType,
+              );
             }),
         const SizedBox(height: 12),
         SwitchListTile(

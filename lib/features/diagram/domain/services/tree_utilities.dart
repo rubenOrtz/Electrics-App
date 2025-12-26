@@ -204,7 +204,7 @@ class TreeUtilities {
         props['power'] = (n.powerWatts / 1000).toStringAsFixed(2);
         props['power_watts'] = n.powerWatts.toStringAsFixed(0);
         props['cos_phi'] = n.cosPhi.toStringAsFixed(2);
-        props['load_type'] = n.type.toString().split('.').last;
+        props['load_type'] = n.type;
         props['is_three_phase'] = n.isThreePhase.toString();
 
         if (n.inputCable != null) {

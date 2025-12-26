@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/diagram_models.dart';
+import '../../domain/entities/electrical_enums.dart';
 import 'diagram_constants.dart';
 
 const double kFontSize = 12.0;
@@ -63,11 +64,11 @@ class DiagramNodeWidget extends StatelessWidget {
           final limit = node.properties['limit'] as double? ?? 3.0;
 
           IconData mainIcon = Icons.lightbulb_outline;
-          final loadType = node.properties['load_type'] as String?;
+          final loadType = node.properties['load_type'] as LoadType?;
 
-          if (loadType == 'motor') {
+          if (loadType == LoadType.motor) {
             mainIcon = Icons.settings;
-          } else if (loadType == 'power') {
+          } else if (loadType == LoadType.power) {
             mainIcon = Icons.power;
           }
 

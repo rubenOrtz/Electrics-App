@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../entities/field_measurement.dart';
+import '../../domain/entities/field_measurement.dart';
 import '../../../../l10n/app_localizations.dart';
 
 /// Extension on FieldMeasurement to provide UI-specific formatting utilities.
