@@ -3,6 +3,6 @@ flutter_launcher_icons:
   ios: false
   image_path: "assets/logo.png"
 
-  # Configuración específica para Android (Iconos Adaptativos)
-  adaptive_icon_background: "#135BEC" # Tu azul kPrimaryColor
+  # Android-specific configuration (Adaptive Icons)
+  adaptive_icon_background: "#135BEC" # Your blue kPrimaryColor
   adaptive_icon_foreground: "assets/logo.png"
