@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
@@ -310,6 +311,9 @@ class _InitializationTimeoutWrapperState
     extends State<_InitializationTimeoutWrapper> {
   /// Maximum time to wait for initialization before showing timeout error
   static const Duration _initializationTimeout = Duration(seconds: 30);
+  
+  /// Timer for tracking the initialization timeout
+  Timer? _timeoutTimer;
 
   @override
   void initState() {
@@ -318,11 +322,17 @@ class _InitializationTimeoutWrapperState
   }
 
   void _startTimeoutMonitor() {
-    Future.delayed(_initializationTimeout, () {
+    _timeoutTimer = Timer(_initializationTimeout, () {
       if (mounted) {
         context.read<AppStateCubit>().handleInitializationTimeout();
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _timeoutTimer?.cancel();
+    super.dispose();
   }
 
   @override
