@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:electrician_app/features/onboarding/presentation/bloc/onboarding_cubit.dart';
 import 'package:electrician_app/features/settings/domain/entities/user_profile.dart';
+import 'package:electrician_app/features/onboarding/domain/entities/onboarding_preferences.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
@@ -11,6 +12,8 @@ class MockSaveOnboardingDataUseCase extends Mock
 
 class FakeUserProfile extends Fake implements UserProfile {}
 
+class FakeOnboardingPreferences extends Fake implements OnboardingPreferences {}
+
 void main() {
   group('OnboardingCubit', () {
     late MockSaveOnboardingDataUseCase mockSaveDataUseCase;
@@ -20,6 +23,7 @@ void main() {
       mockSaveDataUseCase = MockSaveOnboardingDataUseCase();
       cubit = OnboardingCubit(saveDataUseCase: mockSaveDataUseCase);
       registerFallbackValue(FakeUserProfile());
+      registerFallbackValue(FakeOnboardingPreferences());
     });
 
     tearDown(() {
