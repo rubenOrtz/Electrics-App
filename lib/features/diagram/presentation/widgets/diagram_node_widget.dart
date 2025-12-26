@@ -64,7 +64,19 @@ class DiagramNodeWidget extends StatelessWidget {
           final limit = node.properties['limit'] as double? ?? 3.0;
 
           IconData mainIcon = Icons.lightbulb_outline;
-          final loadType = node.properties['load_type'] as LoadType?;
+
+          // Safe enum parsing - handles both LoadType enum and String representation
+          LoadType? loadType;
+          final loadTypeValue = node.properties['load_type'];
+          if (loadTypeValue is LoadType) {
+            loadType = loadTypeValue;
+          } else if (loadTypeValue is String) {
+            try {
+              loadType = LoadType.values.byName(loadTypeValue);
+            } catch (_) {
+              loadType = null; // Default to lighting if invalid
+            }
+          }
 
           if (loadType == LoadType.motor) {
             mainIcon = Icons.settings;

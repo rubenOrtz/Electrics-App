@@ -34,7 +34,13 @@ class AppRouteObserver extends RouteObserver<PageRoute<dynamic>> {
     Route<dynamic> route,
     Route<dynamic>? previousRoute,
   ) {
-    // Logging disabled for Clean Architecture compliance
+    // Debug logging for development - stripped in release builds
+    if (route.settings.name != null) {
+      debugPrint(
+        '🧭 Navigation [$action]: ${route.settings.name} '
+        '${previousRoute?.settings.name != null ? "from ${previousRoute.settings.name}" : ""}',
+      );
+    }
   }
 }
 

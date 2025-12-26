@@ -2,7 +2,13 @@ import '../../../diagram/domain/entities/electrical_enums.dart';
 
 /// Domain service for electrical validation according to REBT/IEC standards.
 /// Encapsulates business rules for voltage drops, impedance limits, and protection coordination.
+///
+/// **Usage:** All methods are static - call directly without instantiation.
+/// Example: `ElectricalValidationService.validateVoltageDrop(...)`
 class ElectricalValidationService {
+  // Private constructor to prevent instantiation
+  ElectricalValidationService._();
+
   // REBT Voltage Drop Limits
   static const double _lightingDropPercent = 0.03; // 3% for lighting
   static const double _powerDropPercent = 0.05; // 5% for power loads
@@ -15,7 +21,7 @@ class ElectricalValidationService {
 
   /// Validates voltage drop for a given load type.
   /// Returns error message if invalid, null if valid.
-  String? validateVoltageDrop({
+  static String? validateVoltageDrop({
     required double measuredVoltage,
     required LoadType loadType,
     double nominalVoltage = _nominalVoltage,
@@ -37,7 +43,7 @@ class ElectricalValidationService {
 
   /// Validates loop impedance (Zs).
   /// Returns error message if invalid, null if valid.
-  String? validateLoopImpedance(double impedance) {
+  static String? validateLoopImpedance(double impedance) {
     if (impedance <= 0) {
       return "Inválido (<=0)";
     }
@@ -51,7 +57,7 @@ class ElectricalValidationService {
 
   /// Validates RCD trip current against sensitivity.
   /// Returns error message if invalid, null if valid.
-  String? validateRcdTripCurrent({
+  static String? validateRcdTripCurrent({
     required double tripCurrent,
     required double sensitivity,
   }) {
@@ -64,7 +70,7 @@ class ElectricalValidationService {
 
   /// Validates RCD trip time.
   /// Returns error message if invalid, null if valid.
-  String? validateRcdTripTime(double tripTime) {
+  static String? validateRcdTripTime(double tripTime) {
     const maxTripTime = 300.0; // milliseconds
 
     if (tripTime > maxTripTime) {
@@ -76,7 +82,7 @@ class ElectricalValidationService {
 
   /// Validates contact voltage (touch voltage).
   /// Returns error message if invalid, null if valid.
-  String? validateContactVoltage(double voltage) {
+  static String? validateContactVoltage(double voltage) {
     const maxSafeVoltage = 50.0; // V
 
     if (voltage > maxSafeVoltage) {
@@ -87,7 +93,7 @@ class ElectricalValidationService {
   }
 
   /// Gets the allowed voltage drop percentage for a load type.
-  double _getAllowedDropPercent(LoadType loadType) {
+  static double _getAllowedDropPercent(LoadType loadType) {
     switch (loadType) {
       case LoadType.lighting:
         return _lightingDropPercent;
@@ -98,7 +104,7 @@ class ElectricalValidationService {
   }
 
   /// Gets minimum acceptable voltage for a load type.
-  double getMinVoltage({
+  static double getMinVoltage({
     required LoadType loadType,
     double nominalVoltage = _nominalVoltage,
   }) {
@@ -107,7 +113,7 @@ class ElectricalValidationService {
   }
 
   /// Gets maximum acceptable voltage.
-  double getMaxVoltage({double nominalVoltage = _nominalVoltage}) {
+  static double getMaxVoltage({double nominalVoltage = _nominalVoltage}) {
     return nominalVoltage * 1.10;
   }
 }

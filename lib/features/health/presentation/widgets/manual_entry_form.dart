@@ -11,13 +11,11 @@ import '../../domain/services/electrical_validation_service.dart';
 class ManualEntryForm extends StatefulWidget {
   final ElectricalNode node;
   final Function(FieldMeasurement) onSave;
-  final ElectricalValidationService? validationService;
 
   const ManualEntryForm({
     Key? key,
     required this.node,
     required this.onSave,
-    this.validationService,
   }) : super(key: key);
 
   @override
@@ -28,7 +26,6 @@ enum _FormType { source, rcd, insulation, load, panel, generic }
 
 class _ManualEntryFormState extends State<ManualEntryForm> {
   final _uuid = const Uuid();
-  late final ElectricalValidationService _validationService;
   late _FormType _currentFormType;
   List<_FormType> _availableTypes = [];
 
@@ -64,8 +61,6 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
   @override
   void initState() {
     super.initState();
-    _validationService =
-        widget.validationService ?? ElectricalValidationService();
     _determineAvailableTypes();
   }
 
@@ -380,7 +375,7 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             textSub: sub,
             validator: (val) {
               final time = double.tryParse(val) ?? 0;
-              return _validationService.validateRcdTripTime(time);
+              return ElectricalValidationService.validateRcdTripTime(time);
             }),
         _buildInputCard(
             label:
@@ -392,7 +387,7 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             textSub: sub,
             validator: (val) {
               final measured = double.tryParse(val) ?? 0;
-              return _validationService.validateRcdTripCurrent(
+              return ElectricalValidationService.validateRcdTripCurrent(
                 tripCurrent: measured,
                 sensitivity: sensitivity,
               );
@@ -406,7 +401,7 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
           textSub: sub,
           validator: (val) {
             final voltage = double.tryParse(val) ?? 0;
-            return _validationService.validateContactVoltage(voltage);
+            return ElectricalValidationService.validateContactVoltage(voltage);
           },
         ),
         const SizedBox(height: 12),
@@ -467,7 +462,7 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             textSub: sub,
             validator: (val) {
               final zs = double.tryParse(val) ?? 0;
-              return _validationService.validateLoopImpedance(zs);
+              return ElectricalValidationService.validateLoopImpedance(zs);
             }),
         const SizedBox(height: 12),
         _buildInputCard(
@@ -479,7 +474,7 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             textSub: sub,
             validator: (val) {
               final v = double.tryParse(val) ?? 230;
-              return _validationService.validateVoltageDrop(
+              return ElectricalValidationService.validateVoltageDrop(
                 measuredVoltage: v,
                 loadType: loadType,
               );
