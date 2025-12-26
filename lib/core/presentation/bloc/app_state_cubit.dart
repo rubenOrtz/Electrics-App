@@ -91,6 +91,19 @@ class AppStateCubit extends Cubit<AppState> {
     }
   }
 
+  /// Handle initialization timeout
+  /// Called when initialization takes too long to complete
+  void handleInitializationTimeout() {
+    // Only trigger timeout if still in initializing state
+    if (state.status == AppStatus.initializing) {
+      emit(state.copyWith(
+        status: AppStatus.initializationFailed,
+        isLoading: false,
+        error: 'Initialization timeout: The app took too long to start. Please check your connection and try again.',
+      ));
+    }
+  }
+
   /// Check app initialization state and determine initial route
   /// @deprecated Use initializeApp() instead - this method is kept for compatibility
   Future<void> checkAppStatus() async {
