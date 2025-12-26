@@ -81,8 +81,6 @@ class _CompanyInfoStepState extends State<CompanyInfoStep> {
               onChanged: (value) {
                 if (_formKey.currentState!.validate()) {
                   context.read<OnboardingCubit>().updateCompanyInfo(cif: value);
-                } else {
-                  context.read<OnboardingCubit>().updateCompanyInfo(cif: value);
                 }
               },
             ),
