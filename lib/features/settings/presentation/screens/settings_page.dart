@@ -3,8 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../core/presentation/widgets/premium_list_tile.dart';
 import '../../../../core/presentation/widgets/coming_soon_dialog.dart';
-import '../../../../config/theme/theme_cubit.dart';
 import '../../domain/entities/app_preferences.dart';
+import '../../domain/entities/app_theme_mode.dart';
 import '../bloc/settings_cubit.dart';
 import '../bloc/user_profile_cubit.dart';
 import '../widgets/profile_header_card.dart';
@@ -166,7 +166,7 @@ class _SettingsPageState extends State<SettingsPage> {
                 // 5. Version info
                 Center(
                   child: Text(
-                    "Versión 2.4.1 (Build 2043)\n© 2025 ElectricianApp Pro",
+                    "${state.version}\n© ${DateTime.now().year} Electrics App",
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.grey, fontSize: 12),
                   ),
@@ -211,8 +211,6 @@ class _SettingsPageState extends State<SettingsPage> {
   void _showThemeSelector(
       BuildContext context, AppLocalizations l10n, AppThemeMode currentMode) {
     final theme = Theme.of(context);
-    final themeCubit = context.read<ThemeCubit>();
-    final isDynamicAvailable = themeCubit.state.isDynamicColorAvailable;
 
     showDialog(
       context: context,
@@ -231,11 +229,9 @@ class _SettingsPageState extends State<SettingsPage> {
             const SizedBox(height: 8),
             _buildThemeOption(ctx, l10n.themeAuto, Icons.brightness_auto,
                 AppThemeMode.system, currentMode, theme),
-            if (isDynamicAvailable || currentMode == AppThemeMode.dynamic) ...[
-              const SizedBox(height: 8),
-              _buildThemeOption(ctx, 'Dinámico (Material You)', Icons.palette,
-                  AppThemeMode.dynamic, currentMode, theme),
-            ],
+            const SizedBox(height: 8),
+            _buildThemeOption(ctx, 'Dinámico (Material You)', Icons.palette,
+                AppThemeMode.dynamic, currentMode, theme),
           ],
         ),
       ),

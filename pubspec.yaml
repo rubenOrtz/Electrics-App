@@ -3,7 +3,7 @@ description: An app for electricians.
 
 publish_to: 'none'
 
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ">=3.0.0 <4.0.0"
@@ -68,6 +68,7 @@ dependencies:
   fl_chart: ^1.1.1
   shared_preferences: ^2.3.3
   flutter_native_splash: ^2.4.7
+  package_info_plus: ^9.0.0
 
 dev_dependencies:
   flutter_test:

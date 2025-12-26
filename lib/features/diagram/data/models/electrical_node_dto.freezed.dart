@@ -35,10 +35,8 @@ ElectricalNodeDto _$ElectricalNodeDtoFromJson(Map<String, dynamic> json) {
 mixin _$ElectricalNodeDto {
   String get id => throw _privateConstructorUsedError;
   String get name => throw _privateConstructorUsedError;
-  ElectricalState get state =>
-      throw _privateConstructorUsedError; // NEW: Acometida
-  MeasurementState? get lastMeasurement =>
-      throw _privateConstructorUsedError; // NEW: Forensic
+  ElectricalState get state => throw _privateConstructorUsedError;
+  MeasurementState? get lastMeasurement => throw _privateConstructorUsedError;
   AssetMetadata get assetMetadata => throw _privateConstructorUsedError;
   @optionalTypeArgs
   TResult when<TResult extends Object?>({
@@ -88,6 +86,7 @@ mixin _$ElectricalNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)
         load,
@@ -141,6 +140,7 @@ mixin _$ElectricalNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
@@ -194,6 +194,7 @@ mixin _$ElectricalNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
@@ -561,6 +562,7 @@ class _$SourceNodeDtoImpl implements SourceNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)
         load,
@@ -618,6 +620,7 @@ class _$SourceNodeDtoImpl implements SourceNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
@@ -675,6 +678,7 @@ class _$SourceNodeDtoImpl implements SourceNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
@@ -1002,6 +1006,7 @@ class _$PanelNodeDtoImpl implements PanelNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)
         load,
@@ -1059,6 +1064,7 @@ class _$PanelNodeDtoImpl implements PanelNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
@@ -1116,6 +1122,7 @@ class _$PanelNodeDtoImpl implements PanelNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
@@ -1530,6 +1537,7 @@ class _$ProtectionNodeDtoImpl implements ProtectionNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)
         load,
@@ -1600,6 +1608,7 @@ class _$ProtectionNodeDtoImpl implements ProtectionNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
@@ -1670,6 +1679,7 @@ class _$ProtectionNodeDtoImpl implements ProtectionNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
@@ -1802,6 +1812,7 @@ abstract class _$$LoadNodeDtoImplCopyWith<$Res>
       AssetMetadata assetMetadata,
       double powerWatts,
       double cosPhi,
+      LoadType type,
       bool isThreePhase,
       CatalogMetadata? cableCatalogData});
 
@@ -1832,6 +1843,7 @@ class __$$LoadNodeDtoImplCopyWithImpl<$Res>
     Object? assetMetadata = null,
     Object? powerWatts = null,
     Object? cosPhi = null,
+    Object? type = null,
     Object? isThreePhase = null,
     Object? cableCatalogData = freezed,
   }) {
@@ -1868,6 +1880,10 @@ class __$$LoadNodeDtoImplCopyWithImpl<$Res>
           ? _value.cosPhi
           : cosPhi // ignore: cast_nullable_to_non_nullable
               as double,
+      type: null == type
+          ? _value.type
+          : type // ignore: cast_nullable_to_non_nullable
+              as LoadType,
       isThreePhase: null == isThreePhase
           ? _value.isThreePhase
           : isThreePhase // ignore: cast_nullable_to_non_nullable
@@ -1916,6 +1932,7 @@ class _$LoadNodeDtoImpl implements LoadNodeDto {
       this.assetMetadata = const AssetMetadata(),
       this.powerWatts = 3000,
       this.cosPhi = 0.9,
+      this.type = LoadType.power,
       this.isThreePhase = false,
       this.cableCatalogData,
       final String? $type})
@@ -1947,6 +1964,10 @@ class _$LoadNodeDtoImpl implements LoadNodeDto {
   final double cosPhi;
   @override
   @JsonKey()
+  final LoadType type;
+// NEW: Persistence
+  @override
+  @JsonKey()
   final bool isThreePhase;
   @override
   final CatalogMetadata? cableCatalogData;
@@ -1956,7 +1977,7 @@ class _$LoadNodeDtoImpl implements LoadNodeDto {
 
   @override
   String toString() {
-    return 'ElectricalNodeDto.load(id: $id, name: $name, state: $state, inputCable: $inputCable, lastMeasurement: $lastMeasurement, assetMetadata: $assetMetadata, powerWatts: $powerWatts, cosPhi: $cosPhi, isThreePhase: $isThreePhase, cableCatalogData: $cableCatalogData)';
+    return 'ElectricalNodeDto.load(id: $id, name: $name, state: $state, inputCable: $inputCable, lastMeasurement: $lastMeasurement, assetMetadata: $assetMetadata, powerWatts: $powerWatts, cosPhi: $cosPhi, type: $type, isThreePhase: $isThreePhase, cableCatalogData: $cableCatalogData)';
   }
 
   @override
@@ -1976,6 +1997,7 @@ class _$LoadNodeDtoImpl implements LoadNodeDto {
             (identical(other.powerWatts, powerWatts) ||
                 other.powerWatts == powerWatts) &&
             (identical(other.cosPhi, cosPhi) || other.cosPhi == cosPhi) &&
+            (identical(other.type, type) || other.type == type) &&
             (identical(other.isThreePhase, isThreePhase) ||
                 other.isThreePhase == isThreePhase) &&
             (identical(other.cableCatalogData, cableCatalogData) ||
@@ -1994,6 +2016,7 @@ class _$LoadNodeDtoImpl implements LoadNodeDto {
       assetMetadata,
       powerWatts,
       cosPhi,
+      type,
       isThreePhase,
       cableCatalogData);
 
@@ -2052,12 +2075,13 @@ class _$LoadNodeDtoImpl implements LoadNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)
         load,
   }) {
     return load(id, name, state, inputCable, lastMeasurement, assetMetadata,
-        powerWatts, cosPhi, isThreePhase, cableCatalogData);
+        powerWatts, cosPhi, type, isThreePhase, cableCatalogData);
   }
 
   @override
@@ -2109,12 +2133,23 @@ class _$LoadNodeDtoImpl implements LoadNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
   }) {
-    return load?.call(id, name, state, inputCable, lastMeasurement,
-        assetMetadata, powerWatts, cosPhi, isThreePhase, cableCatalogData);
+    return load?.call(
+        id,
+        name,
+        state,
+        inputCable,
+        lastMeasurement,
+        assetMetadata,
+        powerWatts,
+        cosPhi,
+        type,
+        isThreePhase,
+        cableCatalogData);
   }
 
   @override
@@ -2166,6 +2201,7 @@ class _$LoadNodeDtoImpl implements LoadNodeDto {
             AssetMetadata assetMetadata,
             double powerWatts,
             double cosPhi,
+            LoadType type,
             bool isThreePhase,
             CatalogMetadata? cableCatalogData)?
         load,
@@ -2173,7 +2209,7 @@ class _$LoadNodeDtoImpl implements LoadNodeDto {
   }) {
     if (load != null) {
       return load(id, name, state, inputCable, lastMeasurement, assetMetadata,
-          powerWatts, cosPhi, isThreePhase, cableCatalogData);
+          powerWatts, cosPhi, type, isThreePhase, cableCatalogData);
     }
     return orElse();
   }
@@ -2233,6 +2269,7 @@ abstract class LoadNodeDto implements ElectricalNodeDto {
       final AssetMetadata assetMetadata,
       final double powerWatts,
       final double cosPhi,
+      final LoadType type,
       final bool isThreePhase,
       final CatalogMetadata? cableCatalogData}) = _$LoadNodeDtoImpl;
 
@@ -2252,6 +2289,7 @@ abstract class LoadNodeDto implements ElectricalNodeDto {
   AssetMetadata get assetMetadata;
   double get powerWatts;
   double get cosPhi;
+  LoadType get type; // NEW: Persistence
   bool get isThreePhase;
   CatalogMetadata? get cableCatalogData;
   @override

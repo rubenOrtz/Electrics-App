@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/onboarding_cubit.dart';
+import '../../domain/utils/validators.dart';
 
 class CompanyInfoStep extends StatefulWidget {
   const CompanyInfoStep({Key? key}) : super(key: key);
@@ -14,6 +15,15 @@ class _CompanyInfoStepState extends State<CompanyInfoStep> {
   final _cifController = TextEditingController();
   final _nameController = TextEditingController();
   final _addressController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final state = context.read<OnboardingCubit>().state;
+    _cifController.text = state.companyCif ?? '';
+    _nameController.text = state.companyName ?? '';
+    _addressController.text = state.companyAddress ?? '';
+  }
 
   @override
   void dispose() {
@@ -49,12 +59,31 @@ class _CompanyInfoStepState extends State<CompanyInfoStep> {
             // CIF
             TextFormField(
               controller: _cifController,
-              decoration: const InputDecoration(
+              textCapitalization: TextCapitalization.characters,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              decoration: InputDecoration(
                 labelText: 'CIF *',
-                border: OutlineInputBorder(),
+                hintText: 'Ej: B12345678',
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.business_outlined),
+                filled: true,
+                fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.05),
               ),
+              validator: (value) {
+                if (value == null || value.isEmpty) {
+                  return 'El CIF es obligatorio';
+                }
+                if (!SpanishDocumentValidator.isValidCIF(value)) {
+                  return 'CIF inválido';
+                }
+                return null;
+              },
               onChanged: (value) {
-                context.read<OnboardingCubit>().updateCompanyInfo(cif: value);
+                if (_formKey.currentState!.validate()) {
+                  context.read<OnboardingCubit>().updateCompanyInfo(cif: value);
+                } else {
+                  context.read<OnboardingCubit>().updateCompanyInfo(cif: value);
+                }
               },
             ),
             const SizedBox(height: 16),
@@ -62,10 +91,18 @@ class _CompanyInfoStepState extends State<CompanyInfoStep> {
             // Company Name
             TextFormField(
               controller: _nameController,
-              decoration: const InputDecoration(
+              textCapitalization: TextCapitalization.words,
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              decoration: InputDecoration(
                 labelText: 'Nombre de Empresa *',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.storefront_outlined),
+                filled: true,
+                fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.05),
               ),
+              validator: (value) => (value == null || value.isEmpty)
+                  ? 'El nombre es obligatorio'
+                  : null,
               onChanged: (value) {
                 context.read<OnboardingCubit>().updateCompanyInfo(name: value);
               },
@@ -75,11 +112,18 @@ class _CompanyInfoStepState extends State<CompanyInfoStep> {
             // Address
             TextFormField(
               controller: _addressController,
-              decoration: const InputDecoration(
+              autovalidateMode: AutovalidateMode.onUserInteraction,
+              decoration: InputDecoration(
                 labelText: 'Dirección *',
-                border: OutlineInputBorder(),
+                border: const OutlineInputBorder(),
+                prefixIcon: const Icon(Icons.location_on_outlined),
+                filled: true,
+                fillColor: theme.colorScheme.onSurface.withValues(alpha: 0.05),
               ),
               maxLines: 3,
+              validator: (value) => (value == null || value.isEmpty)
+                  ? 'La dirección es obligatoria'
+                  : null,
               onChanged: (value) {
                 context
                     .read<OnboardingCubit>()

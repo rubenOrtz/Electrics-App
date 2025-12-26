@@ -1,6 +1,6 @@
 import 'package:isar/isar.dart';
 import '../../domain/entities/app_preferences.dart';
-import '../../../../config/theme/theme_cubit.dart';
+import '../../domain/entities/app_theme_mode.dart';
 
 part 'app_settings_model.g.dart';
 

@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../domain/entities/diagram_models.dart';
+import 'diagram_constants.dart';
 
-const double kNodeWidth = 80.0;
-const double kNodeHeight = 120.0;
 const double kFontSize = 12.0;
 
 class DiagramNodeWidget extends StatelessWidget {
@@ -11,13 +10,13 @@ class DiagramNodeWidget extends StatelessWidget {
   final Function(DiagramNode) onSelect;
   final Function(NodeType, DiagramNode) onAddChild;
 
-  const DiagramNodeWidget({
-    Key? key,
+  DiagramNodeWidget({
+    super.key,
     required this.node,
     required this.isSelected,
     required this.onSelect,
     required this.onAddChild,
-  }) : super(key: key);
+  });
 
   bool _isDropCompliant(dynamic dropVal, [double limit = 3.0]) {
     if (dropVal == null) return true; // Default compliant
@@ -62,11 +61,13 @@ class DiagramNodeWidget extends StatelessWidget {
 
         if (isLoad) {
           final limit = node.properties['limit'] as double? ?? 3.0;
-          final name = node.properties['name'] as String? ?? "";
+
           IconData mainIcon = Icons.lightbulb_outline;
-          if (name.contains('⚙️')) {
+          final loadType = node.properties['load_type'] as String?;
+
+          if (loadType == 'motor') {
             mainIcon = Icons.settings;
-          } else if (limit == 5.0) {
+          } else if (loadType == 'power') {
             mainIcon = Icons.power;
           }
 

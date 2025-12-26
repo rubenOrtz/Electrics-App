@@ -6,6 +6,7 @@ import '../../../diagram/domain/entities/electrical_node.dart';
 import '../../../diagram/domain/entities/electrical_enums.dart'; // For ProtectionType
 import '../../domain/entities/field_measurement.dart';
 
+// TODO: Move logic to bloc
 class ManualEntryForm extends StatefulWidget {
   final ElectricalNode node;
   final Function(FieldMeasurement) onSave;
@@ -47,7 +48,7 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
   // Controllers - Load (Zs)
   final _zsCtrl = TextEditingController();
   final _vLoadCtrl = TextEditingController();
-  final bool _polarityOk = false;
+  bool _polarityOk = false;
 
   // Controllers - Panel (Earth)
   final _raCtrl = TextEditingController();
@@ -189,15 +190,10 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
     final colorScheme = theme.colorScheme;
 
     final bgApp = theme.scaffoldBackgroundColor;
-
-    // Derive card color from theme to guarantee contrast regardless of specific theme config bugs
-    // This creates a slightly lighter version of background in dark mode, and slightly darker in light mode
-    // adhering STRICTLY to AppThemes base colors.
-    final bgCard =
-        Color.alphaBlend(colorScheme.onSurface.withValues(alpha: 0.08), bgApp);
+    final bgCard = colorScheme.surfaceContainerHighest;
 
     final textPrimary = colorScheme.onSurface;
-    final textSecondary = colorScheme.onSurface.withValues(alpha: 0.6);
+    final textSecondary = colorScheme.onSurfaceVariant;
     final accentColor = theme.primaryColor;
 
     return Scaffold(
@@ -360,6 +356,11 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
   }
 
   Widget _buildRcdForm(Color bg, Color txt, Color sub) {
+    final sensitivity = widget.node.maybeMap(
+      protection: (p) => p.sensitivity,
+      orElse: () => 30.0,
+    );
+
     return Column(
       children: [
         _buildSectionTitle(
@@ -375,12 +376,31 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
                 (double.tryParse(val) ?? 0) > 300 ? "Fallo >300ms" : null),
         const SizedBox(height: 12),
         _buildInputCard(
-            label: "Corriente Disparo",
+            label:
+                "Corriente Disparo (IΔn: ${sensitivity.toStringAsFixed(0)}mA)",
             controller: _tripCurrentCtrl,
             suffix: "mA",
             cardBg: bg,
             textMain: txt,
-            textSub: sub),
+            textSub: sub,
+            validator: (val) {
+              final measured = double.tryParse(val) ?? 0;
+              if (measured > sensitivity) {
+                return "Fallo > ${sensitivity.toStringAsFixed(0)}mA";
+              }
+              return null;
+            }),
+        const SizedBox(height: 12),
+        _buildInputCard(
+          label: "Tensión Contacto (Uc)",
+          controller: _contactUbCtrl,
+          suffix: "V",
+          cardBg: bg,
+          textMain: txt,
+          textSub: sub,
+          validator: (val) =>
+              (double.tryParse(val) ?? 0) > 50 ? "Peligro >50V" : null,
+        ),
         const SizedBox(height: 12),
         SwitchListTile(
           title: Text("Test Mecánico (Botón T)", style: TextStyle(color: txt)),
@@ -422,6 +442,17 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
   }
 
   Widget _buildLoadForm(Color bg, Color txt, Color sub) {
+    final double nominalV =
+        widget.node.maybeMap(load: (l) => 230.0, orElse: () => 230.0) ?? 230.0;
+
+    final bool isLighting = widget.node.maybeMap(
+      load: (l) => l.type == LoadType.lighting,
+      orElse: () => false,
+    );
+
+    final double allowedDropPercent = isLighting ? 0.03 : 0.05;
+    final double minVoltage = nominalV * (1.0 - allowedDropPercent);
+
     return Column(
       children: [
         _buildSectionTitle("Impedancia Bucle (Zs)", Icons.loop, txt),
@@ -431,7 +462,13 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             suffix: "Ω",
             cardBg: bg,
             textMain: txt,
-            textSub: sub),
+            textSub: sub,
+            validator: (val) {
+              final zs = double.tryParse(val) ?? 0;
+              if (zs <= 0) return "Inválido (<=0)";
+              if (zs > 200) return "Verificar (>200Ω)";
+              return null;
+            }),
         const SizedBox(height: 12),
         _buildInputCard(
             label: "Tensión en Carga",
@@ -440,8 +477,28 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             cardBg: bg,
             textMain: txt,
             textSub: sub,
-            validator: (val) =>
-                (double.tryParse(val) ?? 230) < 210 ? "Caída excesiva" : null),
+            validator: (val) {
+              final v = double.tryParse(val) ?? 230;
+              final maxVoltage = nominalV * 1.10;
+
+              if (v < minVoltage) {
+                return "Caída > ${allowedDropPercent * 100}% (<${minVoltage.toStringAsFixed(1)}V)";
+              }
+              if (v > maxVoltage) {
+                return "Sobretensión (>${maxVoltage.toStringAsFixed(1)}V)";
+              }
+              return null;
+            }),
+        const SizedBox(height: 12),
+        SwitchListTile(
+          title: Text("Polaridad Correcta", style: TextStyle(color: txt)),
+          subtitle: Text("¿Fase en Fase, Neutro en Neutro?",
+              style: TextStyle(color: sub)),
+          value: _polarityOk,
+          onChanged: (v) => setState(() => _polarityOk = v),
+          activeThumbColor: Colors.green,
+          contentPadding: EdgeInsets.zero,
+        )
       ],
     );
   }
@@ -542,11 +599,8 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             keyboardType: keyboardType,
             inputFormatters: allowText
                 ? []
-                : [
-                    FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))
-                  ], // Added comma support just in case
+                : [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
             onChanged: (v) {
-              // Normalize comma to dot for parsing
               if (v.contains(',')) {
                 final clean = v.replaceAll(',', '.');
                 if (clean != v) {
@@ -559,10 +613,10 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
               setState(() {});
             },
             decoration: InputDecoration(
+              filled: false,
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: InputBorder.none,
-              // Suffix handled elegantly inside field
               suffixIcon: suffix.isNotEmpty
                   ? Column(
                       mainAxisAlignment: MainAxisAlignment.center,

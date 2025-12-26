@@ -4,9 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/diagram_models.dart';
 import '../../../../l10n/app_localizations.dart';
 import '../../../../config/theme/app_themes.dart';
+import 'package:electrician_app/features/settings/domain/entities/app_theme_mode.dart';
 
 class DiagramBottomPanel extends StatelessWidget {
-  final DiagramNode? selectedNode; // Presentation model (clean architecture)
+  final DiagramNode? selectedNode;
   final Function(NodeType) onAddNode;
   final VoidCallback? onEditAdvanced;
 
@@ -27,21 +28,13 @@ class DiagramBottomPanel extends StatelessWidget {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
 
-    // Background color: Premium feel
-    // Use the requested dark theme background if dark mode
-    // Background for top section (Properties) -> Darker color (scaffold bg)
     final diagramTheme = theme.extension<DiagramTheme>()!;
-
-    // Background color: Premium feel
-    // Use the requested dark theme background if dark mode
-    // Background for top section (Properties) -> Darker color (scaffold bg)
     final topBg = diagramTheme.panelBg;
-    // Background for bottom section (Palette) -> Lighter color (card bg)
     final bottomBg = diagramTheme.nodeBg;
 
     return Container(
       decoration: BoxDecoration(
-        color: topBg, // Main container is dark
+        color: topBg,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(24),
           topRight: Radius.circular(24),
@@ -603,6 +596,7 @@ class DiagramBottomPanel extends StatelessWidget {
             textBaseline: TextBaseline.alphabetic,
             children: [
               Flexible(
+                flex: 3,
                 child: Text(
                   value,
                   style: TextStyle(
@@ -613,16 +607,18 @@ class DiagramBottomPanel extends StatelessWidget {
                     fontFamily: theme.textTheme.displayLarge?.fontFamily,
                     letterSpacing: -1.0,
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                  softWrap: true,
                 ),
               ),
               const SizedBox(width: 4),
-              Text(
-                unit,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: diagramTheme.textColor.withValues(alpha: 0.5),
-                  fontSize: isHighContrast ? 16 : 12,
+              Flexible(
+                child: Text(
+                  unit,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: diagramTheme.textColor.withValues(alpha: 0.5),
+                    fontSize: isHighContrast ? 16 : 12,
+                  ),
+                  softWrap: true,
                 ),
               ),
             ],

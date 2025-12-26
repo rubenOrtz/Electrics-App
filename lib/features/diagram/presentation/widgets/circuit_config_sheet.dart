@@ -614,32 +614,26 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
           color: cardBg,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: borderColor)),
-      child: AbsorbPointer(
-        absorbing: _cableCatalogData != null,
-        child: Opacity(
-          opacity: _cableCatalogData != null ? 0.6 : 1.0,
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<InstallationMethod>(
-              dropdownColor: cardBg,
-              value: _installMethod,
-              isExpanded: true,
-              icon: Icon(Icons.arrow_drop_down, color: accent),
-              items: InstallationMethod.values
-                  .map((m) => DropdownMenuItem(
-                        value: m,
-                        child: Text(m.label,
-                            style: TextStyle(
-                                color: text,
-                                fontSize: 13,
-                                overflow: TextOverflow.ellipsis)),
-                      ))
-                  .toList(),
-              onChanged: (v) => setState(() {
-                if (v != null) _installMethod = v;
-                // Reset factors defaults if needed?
-              }),
-            ),
-          ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<InstallationMethod>(
+          dropdownColor: cardBg,
+          value: _installMethod,
+          isExpanded: true,
+          icon: Icon(Icons.arrow_drop_down, color: accent),
+          items: InstallationMethod.values
+              .map((m) => DropdownMenuItem(
+                    value: m,
+                    child: Text(m.label,
+                        style: TextStyle(
+                            color: text,
+                            fontSize: 13,
+                            overflow: TextOverflow.ellipsis)),
+                  ))
+              .toList(),
+          onChanged: (v) => setState(() {
+            if (v != null) _installMethod = v;
+            // Reset factors defaults if needed?
+          }),
         ),
       ),
     );
@@ -750,8 +744,16 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
       child: GestureDetector(
         onTap: () => setState(() {
           _selectedType = type;
-          if (type == LoadType.lighting) {
-            _cosPhi = 1.0;
+          switch (type) {
+            case LoadType.lighting:
+              _cosPhi = 1.0;
+              break;
+            case LoadType.power:
+              _cosPhi = 0.9;
+              break;
+            case LoadType.motor:
+              _cosPhi = 0.8;
+              break;
           }
         }),
         child: Container(

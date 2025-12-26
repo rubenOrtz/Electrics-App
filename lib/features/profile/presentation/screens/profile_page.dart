@@ -3,6 +3,9 @@ import '../../../../config/theme/app_themes.dart';
 import 'package:electrician_app/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../config/theme/theme_cubit.dart';
+import 'package:electrician_app/features/settings/domain/entities/app_theme_mode.dart';
+import '../../../../features/settings/presentation/bloc/user_profile_cubit.dart';
+import '../../../../features/settings/domain/entities/user_profile.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({Key? key}) : super(key: key);
@@ -33,177 +36,219 @@ class _ProfilePageState extends State<ProfilePage> {
               icon: const Icon(Icons.settings_outlined), onPressed: () {}),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Avatar
-            Center(
-              child: Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: kPrimaryColor.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: kPrimaryColor, width: 2),
-                ),
-                child: const Icon(Icons.person, size: 60, color: kPrimaryColor),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text('Carlos Ruiz', style: theme.textTheme.displayMedium),
-            const SizedBox(height: 4),
-            Text('Ingeniero Eléctrico', style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 24),
+      body: BlocBuilder<UserProfileCubit, UserProfileState>(
+        builder: (context, state) {
+          if (state.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-            // Theme Selector (New)
-            _buildSectionHeader(context, "Apariencia"),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: BlocBuilder<ThemeCubit, ThemeState>(
-                builder: (context, state) {
-                  return Column(
+          final profile = state.profile;
+          if (profile == null) {
+            // Fallback if no profile loaded (rare given the logic)
+            return const Center(child: Text('Error al cargar el perfil'));
+          }
+
+          final isCompany =
+              profile.professionalType == ProfessionalType.company;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // Avatar
+                Center(
+                  child: Container(
+                    width: 100,
+                    height: 100,
+                    decoration: BoxDecoration(
+                      color: kPrimaryColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: kPrimaryColor, width: 2),
+                    ),
+                    child: const Icon(Icons.person,
+                        size: 60, color: kPrimaryColor),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  profile.personalName.isNotEmpty
+                      ? profile.personalName
+                      : 'Usuario',
+                  style: theme.textTheme.displayMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  isCompany
+                      ? (profile.companyName ?? 'Empresa')
+                      : 'Ingeniero Autónomo',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                const SizedBox(height: 24),
+
+                // Theme Selector
+                _buildSectionHeader(context, "Apariencia"),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: BlocBuilder<ThemeCubit, ThemeState>(
+                    builder: (context, themeState) {
+                      return Column(
+                        children: [
+                          _buildThemeOption(context, "Claro",
+                              AppThemeMode.light, themeState.mode),
+                          const Divider(),
+                          _buildThemeOption(context, "Oscuro",
+                              AppThemeMode.dark, themeState.mode),
+                          if (themeState.isDynamicColorAvailable) ...[
+                            const Divider(),
+                            _buildThemeOption(
+                                context,
+                                "Dinámico (Material You)",
+                                AppThemeMode.dynamic,
+                                themeState.mode),
+                          ],
+                          const Divider(),
+                          _buildThemeOption(context, "Alto Contraste Claro",
+                              AppThemeMode.highContrastLight, themeState.mode),
+                          const Divider(),
+                          _buildThemeOption(context, "Alto Contraste Oscuro",
+                              AppThemeMode.highContrastDark, themeState.mode),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Professional Data
+                _buildSectionHeader(
+                    context, AppLocalizations.of(context)!.professionalData),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: Column(
                     children: [
-                      _buildThemeOption(
-                          context, "Claro", AppThemeMode.light, state.mode),
+                      _buildProfileItem(context, Icons.badge_outlined,
+                          l10n.nifCif, profile.personalDni),
                       const Divider(),
-                      _buildThemeOption(
-                          context, "Oscuro", AppThemeMode.dark, state.mode),
-                      // Only show Dynamic option if supported
-                      if (state.isDynamicColorAvailable) ...[
+                      _buildProfileItem(context, Icons.engineering_outlined,
+                          l10n.category, l10n.specialistInstaller),
+                      const Divider(),
+                      _buildProfileItem(context, Icons.numbers,
+                          'Nº Registro Ind.', profile.engineerId),
+                      if (isCompany && profile.companyCif != null) ...[
                         const Divider(),
-                        _buildThemeOption(context, "Dinámico (Material You)",
-                            AppThemeMode.dynamic, state.mode),
-                      ],
-                      const Divider(),
-                      _buildThemeOption(context, "Alto Contraste Claro",
-                          AppThemeMode.highContrastLight, state.mode),
-                      const Divider(),
-                      _buildThemeOption(context, "Alto Contraste Oscuro",
-                          AppThemeMode.highContrastDark, state.mode),
+                        _buildProfileItem(context, Icons.business,
+                            'CIF Empresa', profile.companyCif!),
+                      ]
                     ],
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Professional Data
-            _buildSectionHeader(
-                context, AppLocalizations.of(context)!.professionalData),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Column(
-                children: [
-                  _buildProfileItem(
-                      context, Icons.badge_outlined, l10n.nifCif, '12345678Z'),
-                  const Divider(),
-                  _buildProfileItem(context, Icons.engineering_outlined,
-                      l10n.category, l10n.specialistInstaller),
-                  const Divider(),
-                  _buildProfileItem(context, Icons.numbers, 'Nº Registro Ind.',
-                      'RI-2023-4589'),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Contact
-            _buildSectionHeader(context, AppLocalizations.of(context)!.contact),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Column(
-                children: [
-                  _buildProfileItem(
-                      context,
-                      Icons.mail_outline,
-                      AppLocalizations.of(context)!.corporateEmail,
-                      'carlos.ruiz@electricidad.es'),
-                  const Divider(),
-                  _buildProfileItem(
-                      context,
-                      Icons.phone_android,
-                      AppLocalizations.of(context)!.mobilePhone,
-                      '+34 612 345 678'),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Technical Config
-            _buildSectionHeader(
-                context, AppLocalizations.of(context)!.technicalConfig),
-            const SizedBox(height: 12),
-            Container(
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: theme.dividerColor),
-              ),
-              child: Column(
-                children: [
-                  _buildSettingItem(context, l10n.defaultRegulation,
-                      l10n.regulationDesc, 'REBT 2002',
-                      isValue: true),
-                  const Divider(height: 1),
-                  _buildSettingItem(context, 'Tensión Preferida',
-                      'Sistema monofásico/trifásico', '',
-                      isSwitch: true,
-                      switchValue: _tensionPreferida,
-                      onChanged: (val) =>
-                          setState(() => _tensionPreferida = val)),
-                  const Divider(height: 1),
-                  _buildSettingItem(context, 'Face ID / Biometría',
-                      l10n.quickSecureAccess, '',
-                      isSwitch: true,
-                      switchValue: _faceId,
-                      onChanged: (val) => setState(() => _faceId = val)),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Logout
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.of(context).pushReplacementNamed('/login');
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                 ),
-                child: Text(AppLocalizations.of(context)!.logout,
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ),
+                const SizedBox(height: 24),
+
+                // Contact
+                _buildSectionHeader(
+                    context, AppLocalizations.of(context)!.contact),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildProfileItem(
+                          context,
+                          Icons.mail_outline,
+                          AppLocalizations.of(context)!.corporateEmail,
+                          profile.personalEmail),
+                      const Divider(),
+                      _buildProfileItem(
+                          context,
+                          Icons.phone_android,
+                          AppLocalizations.of(context)!.mobilePhone,
+                          profile.personalPhone),
+                      if (isCompany && profile.companyAddress != null) ...[
+                        const Divider(),
+                        _buildProfileItem(context, Icons.location_on_outlined,
+                            'Dirección', profile.companyAddress!),
+                      ]
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 24),
+
+                // Technical Config
+                _buildSectionHeader(
+                    context, AppLocalizations.of(context)!.technicalConfig),
+                const SizedBox(height: 12),
+                Container(
+                  decoration: BoxDecoration(
+                    color: cardColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: theme.dividerColor),
+                  ),
+                  child: Column(
+                    children: [
+                      _buildSettingItem(context, l10n.defaultRegulation,
+                          l10n.regulationDesc, 'REBT 2002',
+                          isValue: true),
+                      const Divider(height: 1),
+                      _buildSettingItem(context, 'Tensión Preferida',
+                          'Sistema monofásico/trifásico', '',
+                          isSwitch: true,
+                          switchValue: _tensionPreferida,
+                          onChanged: (val) =>
+                              setState(() => _tensionPreferida = val)),
+                      const Divider(height: 1),
+                      _buildSettingItem(context, 'Face ID / Biometría',
+                          l10n.quickSecureAccess, '',
+                          isSwitch: true,
+                          switchValue: _faceId,
+                          onChanged: (val) => setState(() => _faceId = val)),
+                    ],
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Logout
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.of(context).pushReplacementNamed('/login');
+                    },
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.red,
+                      side: const BorderSide(color: Colors.red),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: Text(AppLocalizations.of(context)!.logout,
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
+                  ),
+                ),
+                const SizedBox(height: 32),
+              ],
             ),
-            const SizedBox(height: 32),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

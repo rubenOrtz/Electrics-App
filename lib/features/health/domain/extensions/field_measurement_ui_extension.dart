@@ -20,7 +20,8 @@ extension FieldMeasurementUI on FieldMeasurement {
             {String? status, Color? statusColor})
         buildRow,
   ) {
-    return map(
+    // 1. Get specific rows based on measurement type
+    final specificRows = map(
       source: (m) => [
         if (m.voltageLN != null)
           buildRow(l10n.voltageLN, '${m.voltageLN}', 'V', textPrimary,
@@ -131,10 +132,14 @@ extension FieldMeasurementUI on FieldMeasurement {
                 : Colors.orangeAccent,
           ),
       ],
-      generic: (m) => [
-        if (m.notes?.isNotEmpty ?? false)
-          buildRow(l10n.notes, m.notes ?? '', '', textPrimary, textSecondary),
-      ],
+      generic: (m) => [],
     );
+
+    // 2. Combine specific rows with common "Notes" field
+    return [
+      ...specificRows,
+      if (notes != null && notes!.isNotEmpty)
+        buildRow(l10n.notes, notes!, '', textPrimary, textSecondary),
+    ];
   }
 }

@@ -1,22 +1,24 @@
 import 'package:dartz/dartz.dart';
 import 'package:electrician_app/features/onboarding/presentation/bloc/onboarding_cubit.dart';
-import 'package:electrician_app/features/settings/domain/repositories/user_profile_repository.dart';
 import 'package:electrician_app/features/settings/domain/entities/user_profile.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 
-class MockUserProfileRepository extends Mock implements UserProfileRepository {}
+import 'package:electrician_app/features/onboarding/domain/usecases/save_onboarding_data_usecase.dart';
+
+class MockSaveOnboardingDataUseCase extends Mock
+    implements SaveOnboardingDataUseCase {}
 
 class FakeUserProfile extends Fake implements UserProfile {}
 
 void main() {
   group('OnboardingCubit', () {
-    late MockUserProfileRepository mockRepo;
+    late MockSaveOnboardingDataUseCase mockSaveDataUseCase;
     late OnboardingCubit cubit;
 
     setUp(() {
-      mockRepo = MockUserProfileRepository();
-      cubit = OnboardingCubit(userProfileRepository: mockRepo);
+      mockSaveDataUseCase = MockSaveOnboardingDataUseCase();
+      cubit = OnboardingCubit(saveDataUseCase: mockSaveDataUseCase);
       registerFallbackValue(FakeUserProfile());
     });
 
@@ -45,17 +47,22 @@ void main() {
       expect(cubit.state.personalEmail, 'test@test.com');
     });
 
-    test('completeOnboarding calls repository', () async {
+    test('completeOnboarding calls usecase', () async {
       // Arrange
-      when(() => mockRepo.saveUserProfile(any()))
-          .thenAnswer((_) async => const Right(true));
+      when(() => mockSaveDataUseCase(
+            profile: any(named: 'profile'),
+            preferences: any(named: 'preferences'),
+          )).thenAnswer((_) async => const Right(true));
 
       // Act
       final result = await cubit.completeOnboarding();
 
       // Assert
       expect(result, true);
-      verify(() => mockRepo.saveUserProfile(any())).called(1);
+      verify(() => mockSaveDataUseCase(
+            profile: any(named: 'profile'),
+            preferences: any(named: 'preferences'),
+          )).called(1);
     });
   });
 }

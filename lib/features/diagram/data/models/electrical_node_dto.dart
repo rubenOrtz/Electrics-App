@@ -18,8 +18,8 @@ sealed class ElectricalNodeDto with _$ElectricalNodeDto {
     @Default(ElectricalState()) ElectricalState state,
     @Default(230) double nominalVoltage,
     @Default(10000) double shortCircuitCapacity,
-    ConductorAttributes? mainFeedCable, // NEW: Acometida
-    MeasurementState? lastMeasurement, // NEW: Forensic
+    ConductorAttributes? mainFeedCable,
+    MeasurementState? lastMeasurement,
     @Default(AssetMetadata()) AssetMetadata assetMetadata,
     @Default([]) List<ElectricalNodeDto> children,
   }) = SourceNodeDto;
@@ -30,7 +30,7 @@ sealed class ElectricalNodeDto with _$ElectricalNodeDto {
     @Default(ElectricalState()) ElectricalState state,
     @Default(230) double nominalVoltage,
     ConductorAttributes? inputCable,
-    MeasurementState? lastMeasurement, // NEW: Forensic
+    MeasurementState? lastMeasurement,
     @Default(AssetMetadata()) AssetMetadata assetMetadata,
     @Default([]) List<ElectricalNodeDto> children,
   }) = PanelNodeDto;
@@ -39,8 +39,7 @@ sealed class ElectricalNodeDto with _$ElectricalNodeDto {
     required String id,
     required String name,
     @Default(ElectricalState()) ElectricalState state,
-    // REMOVED: ConductorAttributes? inputCable,
-    MeasurementState? lastMeasurement, // NEW: Forensic
+    MeasurementState? lastMeasurement,
     @Default(AssetMetadata()) AssetMetadata assetMetadata,
     @Default(ProtectionType.circuitBreaker) ProtectionType protectionType,
     @Default(16) double ratingAmps,
@@ -58,10 +57,11 @@ sealed class ElectricalNodeDto with _$ElectricalNodeDto {
     required String name,
     @Default(ElectricalState()) ElectricalState state,
     ConductorAttributes? inputCable,
-    MeasurementState? lastMeasurement, // NEW: Forensic
+    MeasurementState? lastMeasurement,
     @Default(AssetMetadata()) AssetMetadata assetMetadata,
     @Default(3000) double powerWatts,
     @Default(0.9) double cosPhi,
+    @Default(LoadType.power) LoadType type,
     @Default(false) bool isThreePhase,
     CatalogMetadata? cableCatalogData,
   }) = LoadNodeDto;
@@ -98,7 +98,6 @@ extension ElectricalNodeDtoX on ElectricalNodeDto {
         id: dto.id,
         name: dto.name,
         state: dto.state,
-        // No inputCable
         lastMeasurement: dto.lastMeasurement,
         assetMetadata: dto.assetMetadata,
         protectionType: dto.protectionType,
@@ -108,8 +107,8 @@ extension ElectricalNodeDtoX on ElectricalNodeDto {
         sensitivity: dto.sensitivity,
         poles: dto.poles,
         children: dto.children.map((e) => e.toDomain()).toList(),
-        catalogData: dto.catalogData, // RESTORE catalog link
-        cableCatalogData: dto.cableCatalogData, // RESTORE cable catalog link
+        catalogData: dto.catalogData,
+        cableCatalogData: dto.cableCatalogData,
       ),
       load: (dto) => ElectricalNode.load(
         id: dto.id,
@@ -118,6 +117,7 @@ extension ElectricalNodeDtoX on ElectricalNodeDto {
         inputCable: dto.inputCable,
         powerWatts: dto.powerWatts,
         cosPhi: dto.cosPhi,
+        type: dto.type,
         lastMeasurement: dto.lastMeasurement,
         assetMetadata: dto.assetMetadata,
         isThreePhase: dto.isThreePhase,
@@ -155,7 +155,6 @@ extension ElectricalNodeX on ElectricalNode {
         id: e.id,
         name: e.name,
         state: e.state,
-        // No inputCable
         lastMeasurement: e.lastMeasurement,
         assetMetadata: e.assetMetadata,
         protectionType: e.protectionType,
@@ -165,8 +164,8 @@ extension ElectricalNodeX on ElectricalNode {
         sensitivity: e.sensitivity,
         poles: e.poles,
         children: e.children.map((c) => c.toDto()).toList(),
-        catalogData: e.catalogData, // PERSIST catalog link
-        cableCatalogData: e.cableCatalogData, // PERSIST cable catalog link
+        catalogData: e.catalogData,
+        cableCatalogData: e.cableCatalogData,
       ),
       load: (e) => ElectricalNodeDto.load(
         id: e.id,
@@ -175,6 +174,7 @@ extension ElectricalNodeX on ElectricalNode {
         inputCable: e.inputCable,
         powerWatts: e.powerWatts,
         cosPhi: e.cosPhi,
+        type: e.type,
         lastMeasurement: e.lastMeasurement,
         assetMetadata: e.assetMetadata,
         isThreePhase: e.isThreePhase,

@@ -1,7 +1,9 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import '../../../../config/theme/theme_cubit.dart';
 import '../../domain/entities/app_preferences.dart';
+import '../../domain/entities/app_theme_mode.dart';
 import '../../domain/repositories/settings_repository.dart';
 
 class SettingsState extends Equatable {
@@ -14,6 +16,7 @@ class SettingsState extends Equatable {
   final AppThemeMode themeMode;
   final bool notificationsEnabled;
   final bool highContrastEnabled;
+  final String version;
 
   final bool isLoading;
 
@@ -24,6 +27,7 @@ class SettingsState extends Equatable {
     this.themeMode = AppThemeMode.dark,
     this.notificationsEnabled = true,
     this.highContrastEnabled = false,
+    this.version = '',
     this.isLoading = false,
   });
 
@@ -34,6 +38,7 @@ class SettingsState extends Equatable {
     AppThemeMode? themeMode,
     bool? notificationsEnabled,
     bool? highContrastEnabled,
+    String? version,
     bool? isLoading,
   }) {
     return SettingsState(
@@ -43,6 +48,7 @@ class SettingsState extends Equatable {
       themeMode: themeMode ?? this.themeMode,
       notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
       highContrastEnabled: highContrastEnabled ?? this.highContrastEnabled,
+      version: version ?? this.version,
       isLoading: isLoading ?? this.isLoading,
     );
   }
@@ -65,6 +71,7 @@ class SettingsState extends Equatable {
         themeMode,
         notificationsEnabled,
         highContrastEnabled,
+        version,
         isLoading,
       ];
 }
@@ -80,6 +87,17 @@ class SettingsCubit extends Cubit<SettingsState> {
   /// Loads all settings from repository
   Future<void> loadSettings() async {
     emit(state.copyWith(isLoading: true));
+
+    // Load version info
+    PackageInfo? packageInfo;
+    try {
+      packageInfo = await PackageInfo.fromPlatform();
+    } catch (e) {
+      // Create fallback if package info fails
+      // ignore: avoid_print
+      print("⚠️ Version Error (Native Plugin not loaded?): $e");
+      packageInfo = null;
+    }
 
     // Load electrical standard
     final standardResult = await _repository.getDefaultElectricalStandard();
@@ -100,6 +118,9 @@ class SettingsCubit extends Cubit<SettingsState> {
       themeMode: prefs.themeMode,
       notificationsEnabled: prefs.notificationsEnabled,
       highContrastEnabled: prefs.highContrastEnabled,
+      version: packageInfo != null
+          ? "Versión ${packageInfo.version} (Build ${packageInfo.buildNumber})"
+          : (state.isLoading ? "" : "Requiere Reinicio (Plugin Nativo)"),
       isLoading: false,
     ));
 

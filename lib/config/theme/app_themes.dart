@@ -46,9 +46,13 @@ const Color kTextSecondary = kTextSecondaryLight;
 // LIGHT THEME
 // ============================================================================
 
+// ============================================================================
+// LIGHT THEME
+// ============================================================================
+
 ThemeData theme() {
   return ThemeData(
-    useMaterial3: false,
+    useMaterial3: true,
     scaffoldBackgroundColor: kBackgroundLight,
     fontFamily: GoogleFonts.notoSans().fontFamily,
     primaryColor: kPrimaryColor,
@@ -57,9 +61,19 @@ ThemeData theme() {
       surface: kSurfaceLight,
       onPrimary: Colors.white,
       onSurface: kTextPrimaryLight,
+      // Fix: Distinct background for inputs
+      surfaceContainerHighest: Color(0xFFF1F5F9), // Slate-100
+      onSurfaceVariant: Color(0xFF64748B), // Slate-500
+      // Fix: Project Icons Background
+      primaryContainer: Color(0xFFD6E3FF),
+      onPrimaryContainer: Color(0xFF001B3D),
     ),
     appBarTheme: appBarTheme(),
-    inputDecorationTheme: inputDecorationTheme(),
+    inputDecorationTheme: inputDecorationTheme(
+      fillColor: kSurfaceLight,
+      borderColor: kBorderLight,
+      focusColor: kPrimaryColor,
+    ),
     textTheme: textTheme(),
     dividerColor: kBorderLight,
     extensions: <ThemeExtension<dynamic>>[
@@ -83,7 +97,7 @@ ThemeData theme() {
 
 ThemeData darkTheme() {
   return ThemeData(
-    useMaterial3: false,
+    useMaterial3: true,
     brightness: Brightness.dark,
     scaffoldBackgroundColor: kBackgroundDark,
     fontFamily: GoogleFonts.notoSans().fontFamily,
@@ -93,6 +107,12 @@ ThemeData darkTheme() {
       surface: kSurfaceDark,
       onPrimary: Colors.white,
       onSurface: kTextPrimaryDark,
+      // Fix: Distinct background for inputs in Dark Mode
+      surfaceContainerHighest: kSurfaceElevatedDark,
+      onSurfaceVariant: Color(0xFF94A3B8), // Slate-400
+      // Fix: Project Icons Background (Dark Blue)
+      primaryContainer: Color(0xFF00468C),
+      onPrimaryContainer: Color(0xFFD6E3FF),
     ),
     appBarTheme: appBarTheme().copyWith(
       backgroundColor: Colors.transparent,
@@ -101,7 +121,11 @@ ThemeData darkTheme() {
           color: kTextPrimaryDark, fontSize: 18, fontWeight: FontWeight.bold),
     ),
     cardColor: kSurfaceDark,
-    inputDecorationTheme: inputDecorationTheme(),
+    inputDecorationTheme: inputDecorationTheme(
+      fillColor: kSurfaceElevatedDark, // Correct dark fill
+      borderColor: kBorderDark,
+      focusColor: kPrimaryColor,
+    ),
     textTheme: textTheme().apply(
       bodyColor: kTextPrimaryDark,
       displayColor: kTextPrimaryDark,
@@ -143,7 +167,11 @@ ThemeData dynamicLightTheme(ColorScheme? lightColorScheme) {
           fontSize: 18,
           fontWeight: FontWeight.bold),
     ),
-    inputDecorationTheme: inputDecorationTheme(),
+    inputDecorationTheme: inputDecorationTheme(
+      fillColor: baseScheme.surfaceContainerHigh,
+      borderColor: baseScheme.outline,
+      focusColor: baseScheme.primary,
+    ),
     textTheme: textTheme().apply(
       bodyColor: baseScheme.onSurface,
       displayColor: baseScheme.onSurface,
@@ -181,7 +209,12 @@ ThemeData dynamicDarkTheme(ColorScheme? darkColorScheme) {
           fontSize: 18,
           fontWeight: FontWeight.bold),
     ),
-    inputDecorationTheme: inputDecorationTheme(),
+    inputDecorationTheme: inputDecorationTheme(
+      fillColor:
+          baseScheme.surfaceContainerHigh, // Adapts to dynamic dark surface
+      borderColor: baseScheme.outline,
+      focusColor: baseScheme.primary,
+    ),
     textTheme: textTheme().apply(
       bodyColor: baseScheme.onSurface,
       displayColor: baseScheme.onSurface,
@@ -201,13 +234,58 @@ ThemeData dynamicDarkTheme(ColorScheme? darkColorScheme) {
   );
 }
 
+// ... (appBarTheme and inputDecorationTheme unchanged) ...
+
+TextTheme textTheme() {
+  final displayFont = GoogleFonts.spaceGrotesk;
+  final bodyFont = GoogleFonts.notoSans;
+
+  return TextTheme(
+    // Headlines - M3 Expressive
+    displayLarge: displayFont(
+        fontSize: 57, fontWeight: FontWeight.normal, color: kTextPrimaryLight),
+    displayMedium: displayFont(
+        fontSize: 45, fontWeight: FontWeight.normal, color: kTextPrimaryLight),
+    displaySmall: displayFont(
+        fontSize: 36, fontWeight: FontWeight.normal, color: kTextPrimaryLight),
+
+    headlineLarge: displayFont(
+        fontSize: 32, fontWeight: FontWeight.bold, color: kTextPrimaryLight),
+    headlineMedium: displayFont(
+        fontSize: 28, fontWeight: FontWeight.bold, color: kTextPrimaryLight),
+    headlineSmall: displayFont(
+        fontSize: 24, fontWeight: FontWeight.bold, color: kTextPrimaryLight),
+
+    // Titles - M3 Expressive
+    titleLarge: bodyFont(
+        fontSize: 22, fontWeight: FontWeight.w600, color: kTextPrimaryLight),
+    titleMedium: bodyFont(
+        fontSize: 16, fontWeight: FontWeight.w600, color: kTextPrimaryLight),
+    titleSmall: bodyFont(
+        fontSize: 14, fontWeight: FontWeight.w600, color: kTextPrimaryLight),
+
+    // Body Text - M3 Expressive
+    bodyLarge: bodyFont(fontSize: 16, color: kTextPrimaryLight),
+    bodyMedium: bodyFont(fontSize: 14, color: kTextSecondaryLight),
+    bodySmall: bodyFont(fontSize: 12, color: kTextSecondaryLight),
+
+    // Labels - M3 Expressive
+    labelLarge: bodyFont(
+        fontSize: 14, fontWeight: FontWeight.bold, color: kTextPrimaryLight),
+    labelMedium: bodyFont(
+        fontSize: 12, fontWeight: FontWeight.w600, color: kTextPrimaryLight),
+    labelSmall: bodyFont(
+        fontSize: 11, fontWeight: FontWeight.normal, color: kTextPrimaryLight),
+  );
+}
+
 // ============================================================================
 // HIGH CONTRAST LIGHT THEME
 // ============================================================================
 
 ThemeData highContrastLightTheme() {
   return ThemeData(
-    useMaterial3: false,
+    useMaterial3: true,
     brightness: Brightness.light,
     scaffoldBackgroundColor: kBackgroundLightHC,
     fontFamily: GoogleFonts.notoSans().fontFamily,
@@ -217,6 +295,10 @@ ThemeData highContrastLightTheme() {
       surface: kSurfaceLightHC,
       onPrimary: Colors.white,
       onSurface: kTextPrimaryLightHC,
+      surfaceContainerHighest: Color(0xFFE0E0E0),
+      onSurfaceVariant: Colors.black,
+      primaryContainer: Color(0xFF0000FF), // Pure Blue for Max Contrast
+      onPrimaryContainer: Colors.white,
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: kSurfaceLightHC,
@@ -252,37 +334,9 @@ ThemeData highContrastLightTheme() {
         borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
     ),
-    textTheme: TextTheme(
-      displayLarge: GoogleFonts.spaceGrotesk(
-          fontSize: 38,
-          fontWeight: FontWeight.w900,
-          height: 1.3,
-          color: kTextPrimaryLightHC),
-      displayMedium: GoogleFonts.spaceGrotesk(
-          fontSize: 28,
-          fontWeight: FontWeight.w900,
-          height: 1.3,
-          color: kTextPrimaryLightHC),
-      bodyLarge: GoogleFonts.notoSans(
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          height: 1.5,
-          color: kTextPrimaryLightHC),
-      bodyMedium: GoogleFonts.notoSans(
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          height: 1.5,
-          color: kTextPrimaryLightHC),
-      bodySmall: GoogleFonts.notoSans(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          height: 1.5,
-          color: kTextPrimaryLightHC),
-      labelLarge: GoogleFonts.notoSans(
-          fontSize: 18,
-          fontWeight: FontWeight.w900,
-          height: 1.4,
-          color: kTextPrimaryLightHC),
+    textTheme: textTheme().apply(
+      bodyColor: kTextPrimaryLightHC,
+      displayColor: kTextPrimaryLightHC,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -359,7 +413,7 @@ ThemeData highContrastLightTheme() {
 
 ThemeData highContrastDarkTheme() {
   return ThemeData(
-    useMaterial3: false,
+    useMaterial3: true,
     brightness: Brightness.dark,
     scaffoldBackgroundColor: kBackgroundDarkHC,
     fontFamily: GoogleFonts.notoSans().fontFamily,
@@ -369,6 +423,11 @@ ThemeData highContrastDarkTheme() {
       surface: kSurfaceDarkHC,
       onPrimary: Colors.black,
       onSurface: kTextPrimaryDarkHC,
+      surfaceContainerHighest: Color(0xFF303030),
+      onSurfaceVariant: Colors.white,
+      primaryContainer:
+          Color(0xFF82B1FF), // Light Blue for contrast against dark
+      onPrimaryContainer: Colors.black,
     ),
     appBarTheme: AppBarTheme(
       backgroundColor: kBackgroundDarkHC,
@@ -404,37 +463,9 @@ ThemeData highContrastDarkTheme() {
         borderRadius: BorderRadius.all(Radius.circular(12)),
       ),
     ),
-    textTheme: TextTheme(
-      displayLarge: GoogleFonts.spaceGrotesk(
-          fontSize: 38,
-          fontWeight: FontWeight.w900,
-          height: 1.3,
-          color: kTextPrimaryDarkHC),
-      displayMedium: GoogleFonts.spaceGrotesk(
-          fontSize: 28,
-          fontWeight: FontWeight.w900,
-          height: 1.3,
-          color: kTextPrimaryDarkHC),
-      bodyLarge: GoogleFonts.notoSans(
-          fontSize: 20,
-          fontWeight: FontWeight.w800,
-          height: 1.5,
-          color: kTextPrimaryDarkHC),
-      bodyMedium: GoogleFonts.notoSans(
-          fontSize: 18,
-          fontWeight: FontWeight.w800,
-          height: 1.5,
-          color: kTextPrimaryDarkHC),
-      bodySmall: GoogleFonts.notoSans(
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          height: 1.5,
-          color: kTextSecondaryDarkHC),
-      labelLarge: GoogleFonts.notoSans(
-          fontSize: 18,
-          fontWeight: FontWeight.w900,
-          height: 1.4,
-          color: kTextPrimaryDarkHC),
+    textTheme: textTheme().apply(
+      bodyColor: kTextPrimaryDarkHC,
+      displayColor: kTextPrimaryDarkHC,
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -529,33 +560,26 @@ AppBarTheme appBarTheme() {
   );
 }
 
-InputDecorationTheme inputDecorationTheme() {
-  OutlineInputBorder outlineInputBorder(Color borderColor) {
+InputDecorationTheme inputDecorationTheme(
+    {required Color fillColor,
+    required Color borderColor,
+    required Color focusColor}) {
+  OutlineInputBorder outlineInputBorder(Color border) {
     return OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: BorderSide(color: borderColor),
+      borderSide: BorderSide(color: border),
     );
   }
 
   return InputDecorationTheme(
     filled: true,
-    fillColor: kSurfaceLight,
+    fillColor: fillColor,
     contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-    enabledBorder: outlineInputBorder(kBorderLight),
-    focusedBorder: outlineInputBorder(kPrimaryColor),
-    border: outlineInputBorder(kBorderLight),
-    hintStyle: GoogleFonts.notoSans(color: kTextSecondaryLight),
-  );
-}
-
-TextTheme textTheme() {
-  return TextTheme(
-    displayLarge: GoogleFonts.spaceGrotesk(
-        fontSize: 32, fontWeight: FontWeight.bold, color: kTextPrimaryLight),
-    displayMedium: GoogleFonts.spaceGrotesk(
-        fontSize: 24, fontWeight: FontWeight.bold, color: kTextPrimaryLight),
-    bodyLarge: GoogleFonts.notoSans(fontSize: 16, color: kTextPrimaryLight),
-    bodyMedium: GoogleFonts.notoSans(fontSize: 14, color: kTextSecondaryLight),
+    enabledBorder: outlineInputBorder(borderColor),
+    focusedBorder: outlineInputBorder(focusColor),
+    border: outlineInputBorder(borderColor),
+    hintStyle: GoogleFonts.notoSans(
+        color: borderColor.withValues(alpha: 0.7)), // Adaptive hint color
   );
 }
 

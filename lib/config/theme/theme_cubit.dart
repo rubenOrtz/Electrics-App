@@ -2,14 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'app_themes.dart';
 
-enum AppThemeMode {
-  light,
-  dark,
-  system,
-  highContrastLight,
-  highContrastDark,
-  dynamic
-}
+import '../../features/settings/domain/entities/app_theme_mode.dart';
 
 class ThemeState {
   final ThemeData themeData;

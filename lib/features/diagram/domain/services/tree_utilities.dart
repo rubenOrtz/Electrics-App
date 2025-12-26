@@ -206,6 +206,7 @@ class TreeUtilities {
         props['cos_phi'] = n.cosPhi.toStringAsFixed(2);
         props['load_type'] = n.type.toString().split('.').last;
         props['is_three_phase'] = n.isThreePhase.toString();
+
         if (n.inputCable != null) {
           props['section_mm2'] = n.inputCable!.sectionMm2.toStringAsFixed(1);
           props['length'] = n.inputCable!.lengthMeters.toStringAsFixed(0);
