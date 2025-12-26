@@ -98,63 +98,65 @@ class MyApp extends StatelessWidget {
         GlobalMaterialLocalizations.delegate,
       ],
       supportedLocales: const [Locale('es'), Locale('en')],
-      home: Scaffold(
-        backgroundColor: kPrimaryColor,
-        body: SafeArea(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(
-                    Icons.error_outline_rounded,
-                    size: 72,
-                    color: Colors.white,
-                  ),
-                  const SizedBox(height: 24),
-                  Text(
-                    AppLocalizations.of(context)?.initializationError ??
-                        'Error de Inicialización',
-                    style: const TextStyle(
+      home: Builder(
+        builder: (context) => Scaffold(
+          backgroundColor: kPrimaryColor,
+          body: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline_rounded,
+                      size: 72,
                       color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
                     ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    error ??
-                        AppLocalizations.of(context)?.unknownError ??
-                        'Error inesperado',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.9),
-                      fontSize: 14,
-                      height: 1.5,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  ElevatedButton.icon(
-                    onPressed: () =>
-                        context.read<AppStateCubit>().initializeApp(),
-                    icon: const Icon(Icons.refresh),
-                    label: Text(
-                        AppLocalizations.of(context)?.retry ?? 'Reintentar'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white,
-                      foregroundColor: kPrimaryColor,
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 32,
-                        vertical: 16,
+                    const SizedBox(height: 24),
+                    Text(
+                      AppLocalizations.of(context)?.initializationError ??
+                          'Error de Inicialización',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      error ??
+                          AppLocalizations.of(context)?.unknownError ??
+                          'Error inesperado',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.9),
+                        fontSize: 14,
+                        height: 1.5,
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 32),
+                    ElevatedButton.icon(
+                      onPressed: () =>
+                          context.read<AppStateCubit>().initializeApp(),
+                      icon: const Icon(Icons.refresh),
+                      label: Text(
+                          AppLocalizations.of(context)?.retry ?? 'Reintentar'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.white,
+                        foregroundColor: kPrimaryColor,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 16,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
