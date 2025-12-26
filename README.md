@@ -1,5 +1,5 @@
 <h1 align="center">
-  <img src="assets/logo.png" width="45" style="vertical-align:middle">
+  <img src="assets/logo.PNG" width="45" style="vertical-align:middle">
   ⚡ Electrics-App: El Gemelo Digital en tu bolsillo
 </h1>
 
