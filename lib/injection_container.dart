@@ -43,6 +43,9 @@ import 'features/budget/domain/services/pricing_engine.dart';
 import 'features/budget/domain/services/material_aggregator_service.dart';
 import 'features/budget/presentation/cubit/budget_cubit.dart';
 import 'features/onboarding/presentation/bloc/onboarding_cubit.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'core/domain/usecases/initialize_app_usecase.dart';
+import 'core/presentation/bloc/app_state_cubit.dart';
 
 final sl = GetIt.instance;
 
@@ -72,6 +75,18 @@ Future<void> initializeDependencies() async {
 
   // Component Feature - DataSource already implements repository interface
   sl.registerSingleton<ComponentRepository>(ComponentLocalDataSource(sl()));
+
+  // Register SharedPreferences as singleton (needed for AppStateCubit)
+  final prefs = await SharedPreferences.getInstance();
+  sl.registerSingleton<SharedPreferences>(prefs);
+
+  // Core Use Cases
+  sl.registerLazySingleton<InitializeAppUseCase>(
+    () => InitializeAppUseCase(
+      componentRepository: sl(),
+      prefs: sl(),
+    ),
+  );
 
   // Settings Feature Use Cases
   sl.registerLazySingleton(() => GetUserProfile(sl()));
@@ -132,4 +147,12 @@ Future<void> initializeDependencies() async {
 
   // Onboarding Feature
   sl.registerFactory(() => OnboardingCubit(userProfileRepository: sl()));
+
+  // Core Cubits
+  sl.registerFactory<AppStateCubit>(
+    () => AppStateCubit(
+      initializeAppUseCase: sl(),
+      prefs: sl(),
+    ),
+  );
 }

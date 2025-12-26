@@ -2911,6 +2911,24 @@ abstract class AppLocalizations {
   /// In es, this message translates to:
   /// **'Eliminar Componente'**
   String get eliminateComponent;
+
+  /// No description provided for @initializing.
+  ///
+  /// In es, this message translates to:
+  /// **'Inicializando...'**
+  String get initializing;
+
+  /// No description provided for @initializationError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error de Inicialización'**
+  String get initializationError;
+
+  /// No description provided for @unknownError.
+  ///
+  /// In es, this message translates to:
+  /// **'Error inesperado durante la inicialización'**
+  String get unknownError;
 }
 
 class _AppLocalizationsDelegate

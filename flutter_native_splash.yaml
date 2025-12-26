@@ -13,9 +13,9 @@ flutter_native_splash:
   # 3. Save as assets/logo/icon_principal.png
   # 4. Uncomment the lines below:
   #
-  image: assets/logo.PNG
+  image: assets/logo.png
   android_12:
-    image: assets/logo.PNG
+    image: assets/logo.png
     icon_background_color: "#135BEC"
     color: "#135BEC"
   

@@ -564,5 +564,9 @@
   "quickSecureAccess": "Acceso rápido seguro",
   
   "readyToStart": "Todo listo para empezar a usar la aplicación",
-  "eliminateComponent": "Eliminar Componente"
+  "eliminateComponent": "Eliminar Componente",
+  
+  "initializing": "Inicializando...",
+  "initializationError": "Error de Inicialización",
+  "unknownError": "Error inesperado durante la inicialización"
 }
