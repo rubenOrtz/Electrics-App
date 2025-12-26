@@ -588,19 +588,18 @@ class _ManualEntryFormState extends State<ManualEntryForm> {
             style: TextStyle(
                 color: textMain, fontSize: 16, fontWeight: FontWeight.normal),
             keyboardType: keyboardType,
-            inputFormatters: allowText
-                ? []
-                : [FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]'))],
+            inputFormatters: [
+              if (!allowText)
+                FilteringTextInputFormatter.allow(RegExp(r'[0-9.,]')),
+              TextInputFormatter.withFunction((oldValue, newValue) {
+                final text = newValue.text.replaceAll(',', '.');
+                return TextEditingValue(
+                  text: text,
+                  selection: newValue.selection,
+                );
+              }),
+            ],
             onChanged: (v) {
-              if (v.contains(',')) {
-                final clean = v.replaceAll(',', '.');
-                if (clean != v) {
-                  controller.value = TextEditingValue(
-                    text: clean,
-                    selection: TextSelection.collapsed(offset: clean.length),
-                  );
-                }
-              }
               setState(() {});
             },
             decoration: InputDecoration(

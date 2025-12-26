@@ -3,14 +3,23 @@ import '../../../diagram/domain/entities/electrical_enums.dart';
 /// Domain service for electrical validation according to REBT/IEC standards.
 /// Encapsulates business rules for voltage drops, impedance limits, and protection coordination.
 ///
-/// **Architecture:** Singleton pattern for easy testing and dependency injection.
-/// **Usage:**
+/// **Architecture Pattern:** Factory Constructor Singleton
+/// - Simple instantiation: `final service = ElectricalValidationService();`
+/// - Testable: Instance methods can be mocked in tests
+/// - No DI container required (postponed to future refactoring)
+///
+/// **Testing:**
 /// ```dart
-/// final service = ElectricalValidationService();
-/// final error = service.validateVoltageDrop(...);
+/// class MockValidationService extends ElectricalValidationService {
+///   @override
+///   String? validateVoltageDrop(...) => null; // Mock response
+/// }
 /// ```
 ///
-/// **Testing:** Can be mocked by creating a test implementation of this class.
+/// **Regulatory Context:** REBT (Spain)
+/// - Target market: Spain only
+/// - Standards: ITC-BT-19, ITC-BT-24
+/// - Future: If expanding internationally, refactor to injectable NormativeConfig
 class ElectricalValidationService {
   // Singleton instance
   static final ElectricalValidationService _instance =
@@ -22,8 +31,16 @@ class ElectricalValidationService {
   /// Private constructor for singleton pattern
   ElectricalValidationService._internal();
 
-  // REBT Voltage Drop Limits (Interior Installations)
-  // Note: Different limits apply for sub-main lines (Acometidas)
+  // REBT Voltage Drop Limits (Spain - Interior Installations)
+  // Reference: ITC-BT-19, Article 2.2.2
+  //
+  // Context: These limits apply to interior electrical installations.
+  // Different limits exist for:
+  // - Sub-main lines (Líneas Generales de Alimentación): 1.5%
+  // - Acometidas (Service Entrances): See ITC-BT-14
+  //
+  // Future: If expanding to other markets (France/IEC, UK/BS7671),
+  // refactor to injectable NormativeConfig entity.
   static const double _lightingDropPercent = 0.03; // 3% for lighting
   static const double _powerDropPercent = 0.05; // 5% for power loads
 
