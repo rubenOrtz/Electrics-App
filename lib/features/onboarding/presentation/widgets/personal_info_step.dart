@@ -98,16 +98,9 @@ class _PersonalInfoStepState extends State<PersonalInfoStep> {
                         ? 'El nombre es obligatorio'
                         : null,
                     onChanged: (value) {
-                      if (_formKey.currentState!.validate()) {
-                        context
-                            .read<OnboardingCubit>()
-                            .updatePersonalInfo(name: value);
-                      } else {
-                        // Still update value, validation handled by UI
-                        context
-                            .read<OnboardingCubit>()
-                            .updatePersonalInfo(name: value);
-                      }
+                      context
+                          .read<OnboardingCubit>()
+                          .updatePersonalInfo(name: value);
                     },
                   ),
                   const SizedBox(height: 20),
