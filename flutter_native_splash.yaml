@@ -6,18 +6,18 @@ flutter_native_splash:
   color: "#135BEC"
   
   # IMPORTANT: Logo image configuration
-  # The existing assets/logo.png file (3.2MB) is incompatible with flutter_native_splash
+  # The existing assets/logo.PNG file (3.2MB) is incompatible with flutter_native_splash
   # To add a logo to the splash screen:
   # 1. Prepare a PNG image (white logo on transparent background)
   # 2. Recommended size: 1152x1152px or 512x512px
   # 3. Save as assets/logo/icon_principal.png
   # 4. Uncomment the lines below:
   #
-  image: assets/logo.png
-  android_12:
-    image: assets/logo.png
-    icon_background_color: "#135BEC"
-    color: "#135BEC"
+  # image: assets/logo.png
+  # android_12:
+  #   image: assets/logo.png
+  #   icon_background_color: "#135BEC"
+  #   color: "#135BEC"
   
   # Fullscreen mode for immersive experience
   fullscreen: true
