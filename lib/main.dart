@@ -31,14 +31,6 @@ Future<void> main() async {
   FlutterNativeSplash.preserve(
       widgetsBinding: WidgetsFlutterBinding.ensureInitialized());
 
-  // Set device orientations for professional field use
-  await SystemChrome.setPreferredOrientations([
-    DeviceOrientation.portraitUp,
-    DeviceOrientation.portraitDown,
-    DeviceOrientation.landscapeLeft,
-    DeviceOrientation.landscapeRight,
-  ]);
-
   // Initialize DI container (Isar, repositories, use cases, etc.)
   await initializeDependencies();
 
