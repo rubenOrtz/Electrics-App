@@ -749,20 +749,32 @@ class _CircuitConfigSheetState extends State<CircuitConfigSheet> {
 
     return Expanded(
       child: GestureDetector(
-        onTap: () => setState(() {
-          _selectedType = type;
-          switch (type) {
-            case LoadType.lighting:
-              _cosPhi = 1.0;
-              break;
-            case LoadType.power:
-              _cosPhi = 0.9;
-              break;
-            case LoadType.motor:
-              _cosPhi = 0.8;
-              break;
-          }
-        }),
+        onTap: () {
+          setState(() {
+            _selectedType = type;
+
+            // Only update cosPhi if it's currently at a default value
+            // This preserves user-entered custom values
+            final isDefaultOrNull =
+                _cosPhi == 1.0 || _cosPhi == 0.9 || _cosPhi == 0.8;
+
+            if (isDefaultOrNull) {
+              // Apply type-specific defaults only if not customized
+              switch (type) {
+                case LoadType.lighting:
+                  _cosPhi = 1.0; // Resistive
+                  break;
+                case LoadType.power:
+                  _cosPhi = 0.9; // Typical
+                  break;
+                case LoadType.motor:
+                  _cosPhi = 0.8; // Inductive
+                  break;
+              }
+            }
+            // else: preserve user's custom cosPhi value
+          });
+        },
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(

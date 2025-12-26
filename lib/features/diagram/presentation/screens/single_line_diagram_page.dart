@@ -5,11 +5,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 // Domain
 import '../../domain/entities/electrical_node.dart';
-import '../../domain/entities/electrical_enums.dart'; // NodeType
+import '../../domain/services/tree_utilities.dart';
+import '../../domain/services/node_factory.dart';
+import '../../domain/entities/electrical_enums.dart';
 import '../../domain/entities/conductor_attributes.dart';
 import '../../domain/entities/diagram_models.dart'; // DiagramNode
-
-import '../../domain/services/tree_utilities.dart'; // Corrected Path
 
 // Presentation - BLoC
 import '../bloc/diagram_cubit.dart';
@@ -638,33 +638,22 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
   ElectricalNode _createNodeFromType(BuildContext context, NodeType type) {
     final id = const Uuid().v4();
     final l10n = AppLocalizations.of(context)!;
+    final factory = NodeFactory();
 
     switch (type) {
       case NodeType.supply:
-        return SourceNode(
-          id: id,
-          name: l10n.acometida,
-          nominalVoltage: 230,
-        );
+        return factory.createDefaultSource(id: id, name: l10n.acometida);
       case NodeType.panel:
-        return PanelNode(id: id, name: l10n.panel, children: []);
+        return factory.createDefaultPanel(id: id, name: l10n.panel);
       case NodeType.breaker:
-        return ProtectionNode(
-            id: id,
-            name: l10n.elemBreaker,
-            protectionType: ProtectionType.circuitBreaker,
-            ratingAmps: 16);
+        return factory.createDefaultBreaker(id: id, name: l10n.elemBreaker);
       case NodeType.differential:
-        return ProtectionNode(
-            id: id,
-            name: l10n.elemDifferential,
-            protectionType: ProtectionType.differential,
-            ratingAmps: 40,
-            sensitivity: 30.0);
+        return factory.createDefaultDifferential(
+            id: id, name: l10n.elemDifferential);
       case NodeType.load:
-        return LoadNode(id: id, name: l10n.power, powerWatts: 1000);
+        return factory.createDefaultLoad(id: id, name: l10n.elemLoad);
       default:
-        return LoadNode(id: id, name: l10n.elemLoad, powerWatts: 0);
+        return factory.createDefaultLoad(id: id, name: l10n.elemLoad);
     }
   }
 
