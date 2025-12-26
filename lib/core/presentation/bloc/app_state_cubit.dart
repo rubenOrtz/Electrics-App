@@ -1,12 +1,15 @@
 import 'package:equatable/equatable.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:electrician_app/core/domain/usecases/initialize_app_usecase.dart';
 
 // ============================================================================
 // APP STATE
 // ============================================================================
 
 enum AppStatus {
+  initializing, // App is starting up, loading resources
+  initializationFailed, // Startup failed with error
   initial,
   onboardingRequired,
   authenticated,
@@ -18,7 +21,7 @@ class AppState extends Equatable {
   final String? error;
 
   const AppState({
-    this.status = AppStatus.initial,
+    this.status = AppStatus.initializing, // Start in initializing state
     this.isLoading = false,
     this.error,
   });
@@ -46,11 +49,63 @@ class AppState extends Equatable {
 class AppStateCubit extends Cubit<AppState> {
   static const String _onboardingCompletedKey = 'onboarding_completed';
 
+  final InitializeAppUseCase _initializeAppUseCase;
   final SharedPreferences _prefs;
 
-  AppStateCubit(this._prefs) : super(const AppState());
+  AppStateCubit({
+    required InitializeAppUseCase initializeAppUseCase,
+    required SharedPreferences prefs,
+  })  : _initializeAppUseCase = initializeAppUseCase,
+        _prefs = prefs,
+        super(const AppState(status: AppStatus.initializing));
+
+  /// Initialize the application
+  ///
+  /// Delegates to InitializeAppUseCase for all initialization logic
+  /// This keeps the Cubit focused on state management only
+  Future<void> initializeApp() async {
+    emit(state.copyWith(status: AppStatus.initializing, isLoading: true));
+
+    final result = await _initializeAppUseCase();
+
+    if (result.isSuccess) {
+      if (result.shouldShowOnboarding) {
+        emit(state.copyWith(
+          status: AppStatus.onboardingRequired,
+          isLoading: false,
+          error: null,
+        ));
+      } else {
+        emit(state.copyWith(
+          status: AppStatus.authenticated,
+          isLoading: false,
+          error: null,
+        ));
+      }
+    } else {
+      emit(state.copyWith(
+        status: AppStatus.initializationFailed,
+        isLoading: false,
+        error: result.error,
+      ));
+    }
+  }
+
+  /// Handle initialization timeout
+  /// Called when initialization takes too long to complete
+  void handleInitializationTimeout() {
+    // Only trigger timeout if still in initializing state
+    if (state.status == AppStatus.initializing) {
+      emit(state.copyWith(
+        status: AppStatus.initializationFailed,
+        isLoading: false,
+        error: 'Initialization timeout: The app took too long to start. Please check your connection and try again.',
+      ));
+    }
+  }
 
   /// Check app initialization state and determine initial route
+  /// @deprecated Use initializeApp() instead - this method is kept for compatibility
   Future<void> checkAppStatus() async {
     emit(state.copyWith(isLoading: true));
 
@@ -81,7 +136,7 @@ class AppStateCubit extends Cubit<AppState> {
   Future<void> completeOnboarding() async {
     try {
       await _prefs.setBool(_onboardingCompletedKey, true);
-      emit(state.copyWith(status: AppStatus.authenticated));
+      emit(state.copyWith(status: AppStatus.authenticated, error: null));
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }
@@ -91,7 +146,7 @@ class AppStateCubit extends Cubit<AppState> {
   Future<void> resetOnboarding() async {
     try {
       await _prefs.remove(_onboardingCompletedKey);
-      emit(state.copyWith(status: AppStatus.onboardingRequired));
+      emit(state.copyWith(status: AppStatus.onboardingRequired, error: null));
     } catch (e) {
       emit(state.copyWith(error: e.toString()));
     }

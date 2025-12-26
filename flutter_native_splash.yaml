@@ -1,0 +1,32 @@
+# flutter_native_splash configuration for Electrics-App
+# Professional native splash screen with brand color
+
+flutter_native_splash:
+  # Brand color - solid blue background matching kPrimaryColor
+  color: "#135BEC"
+  
+  # IMPORTANT: Logo image configuration
+  # The existing assets/logo.PNG file (3.2MB) is incompatible with flutter_native_splash
+  # To add a logo to the splash screen:
+  # 1. Prepare a PNG image (white logo on transparent background)
+  # 2. Recommended size: 1152x1152px or 512x512px
+  # 3. Save as assets/logo/icon_principal.png
+  # 4. Uncomment the lines below:
+  #
+  # image: assets/logo.png
+  # android_12:
+  #   image: assets/logo.png
+  #   icon_background_color: "#135BEC"
+  #   color: "#135BEC"
+  
+  # Fullscreen mode for immersive experience
+  fullscreen: true
+  
+  # Platform configurations
+  android: true
+  ios: false
+  web: false  # Disabled for field professional app
+  
+  # Centering configuration (used when logo is added)
+  android_gravity: center
+  ios_content_mode: center

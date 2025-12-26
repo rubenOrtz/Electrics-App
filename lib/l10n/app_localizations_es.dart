@@ -1434,4 +1434,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get eliminateComponent => 'Eliminar Componente';
+
+  @override
+  String get initializing => 'Inicializando...';
+
+  @override
+  String get initializationError => 'Error de Inicialización';
+
+  @override
+  String get unknownError => 'Error inesperado durante la inicialización';
 }
