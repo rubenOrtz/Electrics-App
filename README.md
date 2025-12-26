@@ -90,6 +90,26 @@ Simplemente, descárgate la última actualización
 
 ---
 
+## 📱 Tour Visual por la App
+
+Aquí puedes ver el flujo de trabajo real de un ingeniero usando **Electrics-App**:
+
+<div align="center">
+
+| **Diagrama Unifilar** | **Sistema de Salud** |
+|:---:|:---:|
+| <img src=".github/assets/Screenshot_20251226-210708.png" width="200"> | <img src=".github/assets/Screenshot_20251226-183046.png" width="200"> |
+| *Organiza tus obras* | *Diagnóstico en tiempo real* |
+
+| **Biblioteca** | **Mediciones de Campo** |
+|:---:|:---:|
+| <img src=".github/assets/Screenshot_20251226-210742.png" width="200"> | <img src=".github/assets/Screenshot_20251226-210608.png" width="200"> |
+| *Componentes inteligentes* | *Ingresa resultados* |
+
+</div>
+
+---
+
 ## 🤝 Buscamos Talento (Contribuir)
 
 Este proyecto es público porque la ingeniería eléctrica merece herramientas modernas. Buscamos dos perfiles:
