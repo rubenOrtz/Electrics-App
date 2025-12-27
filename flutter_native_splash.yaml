@@ -24,7 +24,7 @@ flutter_native_splash:
   
   # Platform configurations
   android: true
-  ios: false
+  ios: true
   web: false  # Disabled for field professional app
   
   # Centering configuration (used when logo is added)
