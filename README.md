@@ -45,6 +45,26 @@ Como ingenieros, nos enfrentamos a un mar de normativas y cálculos complejos en
 
 ---
 
+## 📱 Tour Visual por la App
+
+Aquí puedes ver el flujo de trabajo real de un ingeniero usando **Electrics-App**:
+
+<div align="center">
+
+| **Diagrama Unifilar** | **Sistema de Salud** |
+|:---:|:---:|
+| <img src=".github/assets/Screenshot_20251226-210708.png" width="200"> | <img src=".github/assets/Screenshot_20251226-183046.png" width="200"> |
+| *Organiza tus obras* | *Diagnóstico en tiempo real* |
+
+| **Biblioteca** | **Mediciones de Campo** |
+|:---:|:---:|
+| <img src=".github/assets/Screenshot_20251226-210742.png" width="200"> | <img src=".github/assets/Screenshot_20251226-210608.png" width="200"> |
+| *Componentes inteligentes* | *Ingresa resultados* |
+
+</div>
+
+---
+
 ## ✨ Funcionalidades Estrella
 
 ### 🧬 Motor de Física Avanzado
@@ -86,26 +106,6 @@ Simplemente, descárgate la última actualización
     <img src="https://img.shields.io/badge/DESCARGAR_ÚLTIMA_VERSIÓN-00569b?style=for-the-badge&logo=flutter&logoColor=white&shadow=true" alt="Download Latest Release" height="50">
   </a>
   <p><i>Pre Release v1.0.0</i></p>
-</div>
-
----
-
-## 📱 Tour Visual por la App
-
-Aquí puedes ver el flujo de trabajo real de un ingeniero usando **Electrics-App**:
-
-<div align="center">
-
-| **Diagrama Unifilar** | **Sistema de Salud** |
-|:---:|:---:|
-| <img src=".github/assets/Screenshot_20251226-210708.png" width="200"> | <img src=".github/assets/Screenshot_20251226-183046.png" width="200"> |
-| *Organiza tus obras* | *Diagnóstico en tiempo real* |
-
-| **Biblioteca** | **Mediciones de Campo** |
-|:---:|:---:|
-| <img src=".github/assets/Screenshot_20251226-210742.png" width="200"> | <img src=".github/assets/Screenshot_20251226-210608.png" width="200"> |
-| *Componentes inteligentes* | *Ingresa resultados* |
-
 </div>
 
 ---
