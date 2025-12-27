@@ -1,6 +1,7 @@
 import '../entities/field_measurement.dart';
 import '../entities/installation_health.dart';
 import '../../../diagram/domain/entities/electrical_node.dart';
+import '../../../diagram/domain/services/tree_utilities.dart';
 import 'dart:math';
 
 /// Servicio que calcula la puntuación de salud de la instalación (0-100)
@@ -27,7 +28,7 @@ class HealthScoringService {
     score -= (warningCount * 5); // -5pts por warning
 
     // 2. Comparar mediciones vs cálculos (Teoría vs Realidad)
-    final nodes = _flattenTree(root);
+    final nodes = TreeUtilities.flattenElectricalNodes(root);
     for (var node in nodes) {
       final measurement = measurements[node.id];
       if (measurement != null) {
@@ -119,35 +120,7 @@ class HealthScoringService {
     );
   }
 
-  /// Aplana el árbol de nodos en una lista
-  List<ElectricalNode> _flattenTree(ElectricalNode root) {
-    final nodes = <ElectricalNode>[];
 
-    void traverse(ElectricalNode node) {
-      nodes.add(node);
-      node.map(
-        source: (s) {
-          for (var child in s.children) {
-            traverse(child);
-          }
-        },
-        panel: (p) {
-          for (var child in p.children) {
-            traverse(child);
-          }
-        },
-        protection: (p) {
-          for (var child in p.children) {
-            traverse(child);
-          }
-        },
-        load: (_) {},
-      );
-    }
-
-    traverse(root);
-    return nodes;
-  }
 
   /// Compara mediciones reales vs cálculos teóricos
   /// Compara mediciones reales vs cálculos teóricos

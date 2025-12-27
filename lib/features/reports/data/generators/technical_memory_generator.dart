@@ -5,6 +5,7 @@ import 'package:printing/printing.dart';
 import '../../../projects/domain/entities/project.dart';
 import '../../../diagram/domain/entities/electrical_node.dart';
 import '../../../diagram/domain/entities/electrical_enums.dart';
+import '../../../diagram/domain/services/tree_utilities.dart';
 import 'report_generator_interface.dart';
 
 class TechnicalMemoryGenerator implements ReportGenerator {
@@ -161,7 +162,7 @@ class TechnicalMemoryGenerator implements ReportGenerator {
     String voltageText = "230 V";
 
     if (project.root != null) {
-      final nodes = _flattenTree(project.root!);
+      final nodes = TreeUtilities.flattenElectricalNodes(project.root!);
       totalCircuits =
           nodes.where((n) => n.result != null).length; // Count calculated nodes
 
@@ -429,29 +430,6 @@ class TechnicalMemoryGenerator implements ReportGenerator {
         load: (_) {});
 
     return groups;
-  }
-
-  List<ElectricalNode> _flattenTree(ElectricalNode node) {
-    final list = [node];
-    node.map(
-      source: (n) {
-        for (var c in n.children) {
-          list.addAll(_flattenTree(c));
-        }
-      },
-      panel: (n) {
-        for (var c in n.children) {
-          list.addAll(_flattenTree(c));
-        }
-      },
-      protection: (n) {
-        for (var c in n.children) {
-          list.addAll(_flattenTree(c));
-        }
-      },
-      load: (_) {},
-    );
-    return list;
   }
 
   // --- Field Extractors ---

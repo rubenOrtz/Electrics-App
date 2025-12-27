@@ -2,6 +2,7 @@ import '../entities/insight.dart';
 import '../entities/field_measurement.dart';
 import '../../../diagram/domain/entities/electrical_node.dart';
 import '../../../diagram/domain/entities/validation_status.dart';
+import '../../../diagram/domain/services/tree_utilities.dart';
 
 /// Servicio que genera insights accionables desde errores de validación
 /// y fallos de verificación (teoría vs realidad).
@@ -13,11 +14,14 @@ class InsightGeneratorService {
   ) {
     final insights = <Insight>[];
 
+    // Flatten tree once for better performance
+    final nodes = TreeUtilities.flattenElectricalNodes(root);
+
     // 1. Insights de errores teóricos (ValidationEngine)
-    insights.addAll(_generateTheoryInsights(root));
+    insights.addAll(_generateTheoryInsights(nodes));
 
     // 2. Insights de verificación (mediciones vs cálculos)
-    insights.addAll(_generateVerificationInsights(root, measurements));
+    insights.addAll(_generateVerificationInsights(nodes, measurements));
 
     // 3. Insights de éxito (si todo OK)
     if (insights.where((i) => i.type == InsightType.critical).isEmpty) {
@@ -31,9 +35,8 @@ class InsightGeneratorService {
   }
 
   /// Genera insights desde errores teóricos del ValidationEngine
-  List<Insight> _generateTheoryInsights(ElectricalNode root) {
+  List<Insight> _generateTheoryInsights(List<ElectricalNode> nodes) {
     final insights = <Insight>[];
-    final nodes = _flattenTree(root);
 
     for (var node in nodes) {
       final result = node.result;
@@ -55,18 +58,10 @@ class InsightGeneratorService {
 
   /// Genera insights desde verificaciones de campo
   List<Insight> _generateVerificationInsights(
-    ElectricalNode node,
+    List<ElectricalNode> nodes,
     Map<String, FieldMeasurement> measurements,
   ) {
     final insights = <Insight>[];
-    // This should traverse the provided root, not assume 'node' is root
-    // But the current implementation seems to flatten 'root'.
-    // The recursive call inside 'generateInsights' passes 'root'.
-    // In this specific method context, let's fix the parameter name to 'root' if it's reused.
-    // Wait, the method signature above uses 'ElectricalNode root'.
-    // The method implementation iterates over _flattenTree(root).
-    // So 'node' inside the loop is the current node.
-    final nodes = _flattenTree(node); // 'node' is the root here
 
     for (var n in nodes) {
       final measurement = measurements[n.id];
@@ -246,21 +241,4 @@ class InsightGeneratorService {
     );
   }
 
-  /// Aplana el árbol de nodos
-  List<ElectricalNode> _flattenTree(ElectricalNode root) {
-    final nodes = <ElectricalNode>[];
-
-    void traverse(ElectricalNode node) {
-      nodes.add(node);
-      node.map(
-        source: (s) => s.children.forEach(traverse),
-        panel: (p) => p.children.forEach(traverse),
-        protection: (p) => p.children.forEach(traverse),
-        load: (_) {},
-      );
-    }
-
-    traverse(root);
-    return nodes;
-  }
 }
