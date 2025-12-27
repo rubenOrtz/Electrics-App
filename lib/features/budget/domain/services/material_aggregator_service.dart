@@ -122,7 +122,7 @@ class MaterialAggregatorService {
     
     final protectionDetailsResults = await Future.wait(protectionDetailsFutures);
     final protectionDetailsMap = Map.fromEntries(
-      protectionDetailsResults.whereType<MapEntry<String, dynamic>>(),
+      protectionDetailsResults.whereType<MapEntry<String, ComponentTemplate>>(),
     );
 
     for (var key in protKeys) {
