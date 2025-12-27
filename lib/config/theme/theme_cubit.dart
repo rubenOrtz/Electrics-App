@@ -92,8 +92,10 @@ class ThemeCubit extends Cubit<ThemeState> {
   }
 
   void updateDynamicThemeFromBrightness(Brightness brightness) {
-    if (state.mode != AppThemeMode.dynamic && state.mode != AppThemeMode.system)
+    if (state.mode != AppThemeMode.dynamic &&
+        state.mode != AppThemeMode.system) {
       return;
+    }
 
     final themeData = brightness == Brightness.dark
         ? (state.mode == AppThemeMode.dynamic && state.dynamicDarkScheme != null

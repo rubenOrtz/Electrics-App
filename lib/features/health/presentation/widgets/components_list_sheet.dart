@@ -9,11 +9,11 @@ class ComponentsListSheet extends StatelessWidget {
   final Function(ElectricalNode, List<FieldMeasurement>) onComponentTap;
 
   const ComponentsListSheet({
-    Key? key,
+    super.key,
     required this.components,
     required this.measurements,
     required this.onComponentTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

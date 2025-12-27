@@ -11,10 +11,10 @@ class ComponentLibraryPage extends StatefulWidget {
   final String? filterType; // NEW: Filter by component type
 
   const ComponentLibraryPage({
-    Key? key,
+    super.key,
     this.isPicker = false,
     this.filterType,
-  }) : super(key: key);
+  });
 
   @override
   State<ComponentLibraryPage> createState() => _ComponentLibraryPageState();

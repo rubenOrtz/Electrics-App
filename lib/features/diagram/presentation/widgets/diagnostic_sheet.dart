@@ -7,9 +7,9 @@ class DiagnosticSheet extends StatelessWidget {
   final ElectricalNode node;
 
   const DiagnosticSheet({
-    Key? key,
+    super.key,
     required this.node,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -4,7 +4,7 @@ import '../bloc/onboarding_cubit.dart';
 import '../../../settings/domain/entities/user_profile.dart';
 
 class ProfessionalTypeStep extends StatelessWidget {
-  const ProfessionalTypeStep({Key? key}) : super(key: key);
+  const ProfessionalTypeStep({super.key});
 
   @override
   Widget build(BuildContext context) {

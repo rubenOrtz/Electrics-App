@@ -8,7 +8,7 @@ import '../../../../config/theme/app_themes.dart';
 
 /// Dialog to browse and select cables from catalog
 class CableCatalogDialog extends StatefulWidget {
-  const CableCatalogDialog({Key? key}) : super(key: key);
+  const CableCatalogDialog({super.key});
 
   @override
   State<CableCatalogDialog> createState() => _CableCatalogDialogState();

@@ -52,13 +52,13 @@ class SingleLineDiagramPage extends StatefulWidget {
   final String? initialSelectedNodeId;
 
   const SingleLineDiagramPage({
-    Key? key,
+    super.key,
     required this.projectId,
     required this.title,
     this.selectMode = SelectMode.none,
     this.onNodeSelected,
     this.initialSelectedNodeId,
-  }) : super(key: key);
+  });
 
   @override
   State<SingleLineDiagramPage> createState() => _SingleLineDiagramPageState();
@@ -482,9 +482,11 @@ class _SingleLineDiagramPageState extends State<SingleLineDiagramPage> {
     if (state.root != null) {
       // Use microtask to avoid setState during build or listener collision
       Future.microtask(() {
+        if (!context.mounted) return;
         _runAutoLayout(context);
         if (!_hasAutoCentered) {
           Future.delayed(const Duration(milliseconds: 100), () {
+            if (!context.mounted) return;
             _centerViewOnDiagram(context);
             _hasAutoCentered = true;
           });

@@ -10,22 +10,73 @@ import '../../../../config/theme/app_themes.dart';
 const double kNodeWidth = 80.0;
 const double kNodeHeight = 120.0;
 
-/// Widget reactivo que renderiza un ElectricalNode con feedback visual
+/// Widget reactivo que renderiza un [ElectricalNode] con feedback visual
+/// basado en validaciones REBT 2002 / IEC-60898 / IEC-60909.
+///
+/// **Estados de Validación**:
+/// - 🟢 [ValidationStatus.ok]: Cumple normativa (borde verde)
+/// - 🟡 [ValidationStatus.warning]: Alerta no-crítica (borde naranja)
+/// - 🔴 [ValidationStatus.error]: Incumplimiento normativo (borde rojo + pulso)
+/// - ⚪ [ValidationStatus.pending]: Sin calcular (borde gris)
+///
+/// **Interacciones**:
+/// - **Tap**: Selecciona nodo para edición/configuración
+/// - **Long Press**: Abre menú contextual (eliminar, duplicar, etc.)
+/// - **Hover durante drag**: Feedback magnético ([HapticFeedback.lightImpact])
+///   que indica que el nodo puede recibir un hijo
+///
+/// **Animaciones Field-UX**:
+/// - **Pulso en error**: Animación de escala 1.0 → 1.15 cada 1.2s para
+///   visibilidad inmediata de errores críticos sin necesidad de mirar de cerca
+/// - **Scale en hover**: Crecimiento 1.0 → 1.15 durante drag-over para
+///   affordance visual de drop target
+/// - **Glow effect**: Sombra azul (#135BEC) en hover para "imán magnético"
+///
+/// **Arquitectura**:
+/// - Domain: [ElectricalNode] (entity pura sin UI logic)
+/// - Presentation: Este widget (reactive rendering)
+/// - Validación: [ElectricalCalculator] en domain layer
+///
+/// **Uso**:
+/// ```dart
+/// ElectricalNodeWidget(
+///   node: myProtectionNode,
+///   isSelected: selectedId == myProtectionNode.id,
+///   onTap: () => cubit.selectNode(myProtectionNode.id),
+///   onLongPress: () => _showContextMenu(),
+///   onNodeDropped: (childType) => cubit.addChild(childType),
+/// )
+/// ```
+///
+/// {@category Diagram}
+/// {@category Presentation}
+/// {@category Field-UX}
 class ElectricalNodeWidget extends StatefulWidget {
+  /// Nodo eléctrico a renderizar ([SourceNode], [PanelNode], [ProtectionNode], [LoadNode]).
   final ElectricalNode node;
+
+  /// Si `true`, renderiza con borde de selección ([DiagramTheme.accentColor]).
   final bool isSelected;
+
+  /// Callback al hacer tap (usualmente para selección).
   final VoidCallback onTap;
+
+  /// Callback opcional al hacer long press (usualmente menú contextual).
   final VoidCallback? onLongPress;
+
+  /// Callback cuando se suelta un [NodeType] sobre este nodo durante drag & drop.
+  ///
+  /// Usado para agregar nodos hijos en el diagrama.
   final Function(NodeType)? onNodeDropped;
 
   const ElectricalNodeWidget({
-    Key? key,
+    super.key,
     required this.node,
     required this.isSelected,
     required this.onTap,
     this.onLongPress,
     this.onNodeDropped,
-  }) : super(key: key);
+  });
 
   @override
   State<ElectricalNodeWidget> createState() => _ElectricalNodeWidgetState();

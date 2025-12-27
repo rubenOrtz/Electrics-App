@@ -29,7 +29,7 @@ class DiagramCanvas extends StatelessWidget {
   final List<double> horizontalGuides;
 
   const DiagramCanvas({
-    Key? key,
+    super.key,
     required this.transformController,
     required this.diagramTheme,
     required this.root,
@@ -44,7 +44,7 @@ class DiagramCanvas extends StatelessWidget {
     this.draggingNodeId,
     this.verticalGuides = const [],
     this.horizontalGuides = const [],
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

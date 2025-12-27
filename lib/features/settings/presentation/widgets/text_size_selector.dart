@@ -6,7 +6,7 @@ import '../bloc/settings_cubit.dart';
 
 /// Dialog for selecting text size preference
 class TextSizeSelector extends StatelessWidget {
-  const TextSizeSelector({Key? key}) : super(key: key);
+  const TextSizeSelector({super.key});
 
   static Future<void> show(BuildContext context) {
     return showDialog(

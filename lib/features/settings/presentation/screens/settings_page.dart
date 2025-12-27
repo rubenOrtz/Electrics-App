@@ -13,7 +13,7 @@ import '../widgets/text_size_selector.dart';
 import '../widgets/language_selector.dart';
 
 class SettingsPage extends StatefulWidget {
-  const SettingsPage({Key? key}) : super(key: key);
+  const SettingsPage({super.key});
 
   @override
   State<SettingsPage> createState() => _SettingsPageState();

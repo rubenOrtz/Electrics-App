@@ -1,3 +1,4 @@
+// ignore_for_file: non_constant_identifier_names
 import '../entities/electrical_node.dart';
 import '../entities/calculation_result.dart';
 import '../entities/validation_status.dart';

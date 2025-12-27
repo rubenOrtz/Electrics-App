@@ -93,11 +93,11 @@ class DiagramWiresLayer extends StatelessWidget {
   final Color? wireColor;
 
   const DiagramWiresLayer({
-    Key? key,
+    super.key,
     required this.root,
     required this.positions,
     this.wireColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

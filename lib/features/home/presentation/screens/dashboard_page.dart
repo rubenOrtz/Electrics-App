@@ -9,7 +9,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../projects/presentation/bloc/project_cubit.dart';
 
 class DashboardPage extends StatefulWidget {
-  const DashboardPage({Key? key}) : super(key: key);
+  const DashboardPage({super.key});
 
   @override
   State<DashboardPage> createState() => _DashboardPageState();
@@ -51,8 +51,11 @@ class _DashboardPageState extends State<DashboardPage> {
           type: BottomNavigationBarType.fixed,
           backgroundColor: Theme.of(context).colorScheme.surface,
           selectedItemColor: kPrimaryColor,
-          unselectedItemColor:
-              Theme.of(context).textTheme.bodyMedium?.color?.withValues(alpha: 0.6),
+          unselectedItemColor: Theme.of(context)
+              .textTheme
+              .bodyMedium
+              ?.color
+              ?.withValues(alpha: 0.6),
           showUnselectedLabels: true,
           selectedLabelStyle:
               const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),

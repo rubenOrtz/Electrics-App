@@ -4,7 +4,7 @@ import 'package:electrician_app/l10n/app_localizations.dart';
 import 'package:electrician_app/core/presentation/widgets/beta_feature_banner.dart';
 
 class RegulationsPage extends StatelessWidget {
-  const RegulationsPage({Key? key}) : super(key: key);
+  const RegulationsPage({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -14,11 +14,11 @@ class HealthPage extends StatelessWidget {
   final List<Insight>? insights;
 
   const HealthPage({
-    Key? key,
+    super.key,
     this.root,
     this.health,
     this.insights,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

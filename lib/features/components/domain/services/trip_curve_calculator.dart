@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 /// Trip curve calculator based on IEC 60898 standard for circuit breakers
+// ignore_for_file: non_constant_identifier_names
 class TripCurveCalculator {
   /// Calculate trip curve boundaries for a protection device
   /// Returns list of (current multiple, time in seconds) points

@@ -12,10 +12,10 @@ class ComponentDetailPage extends StatefulWidget {
   final bool isNewComponent;
 
   const ComponentDetailPage({
-    Key? key,
+    super.key,
     this.component,
     this.isNewComponent = false,
-  }) : super(key: key);
+  });
 
   @override
   State<ComponentDetailPage> createState() => _ComponentDetailPageState();
@@ -478,7 +478,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
           TextFormField(
             controller: _nameController,
             decoration: _buildInputDecoration(
-              AppLocalizations.of(context)!.fullName + ' *',
+              '${AppLocalizations.of(context)!.fullName} *',
               hint: 'Ej: Magnetotérmico 16A Curva C',
             ),
             validator: (value) => value?.isEmpty ?? true
@@ -512,8 +512,9 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
             validator: (value) {
               if (value == null || value.isEmpty) return null; // Optional
-              if (double.tryParse(value) == null)
+              if (double.tryParse(value) == null) {
                 return AppLocalizations.of(context)!.invalidNumber;
+              }
               return null;
             },
           ),
@@ -577,7 +578,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: TextFormField(
                   controller: _ratedCurrentController,
                   decoration: _buildInputDecoration(
-                    AppLocalizations.of(context)!.ratedCurrent + ' *',
+                    '${AppLocalizations.of(context)!.ratedCurrent} *',
                     hint: '16',
                   ),
                   keyboardType: TextInputType.number,
@@ -624,7 +625,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                       initialValue:
                           validCurves.contains(_curveType) ? _curveType : null,
                       decoration: _buildInputDecoration(
-                          AppLocalizations.of(context)!.curve + ' *'),
+                          '${AppLocalizations.of(context)!.curve} *'),
                       items: validCurves
                           .map(
                               (c) => DropdownMenuItem(value: c, child: Text(c)))
@@ -653,7 +654,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: TextFormField(
                   controller: _breakingCapacityController,
                   decoration: _buildInputDecoration(
-                    AppLocalizations.of(context)!.breakingCapacity + ' *',
+                    '${AppLocalizations.of(context)!.breakingCapacity} *',
                     hint: '6',
                   ),
                   keyboardType: TextInputType.number,
@@ -667,7 +668,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: DropdownButtonFormField<int>(
                   initialValue: _poles,
                   decoration: _buildInputDecoration(
-                      AppLocalizations.of(context)!.poles + ' *'),
+                      '${AppLocalizations.of(context)!.poles} *'),
                   items: [1, 2, 3, 4]
                       .map((p) =>
                           DropdownMenuItem(value: p, child: Text('${p}P')))
@@ -709,7 +710,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: TextFormField(
                   controller: _sectionController,
                   decoration: _buildInputDecoration(
-                    AppLocalizations.of(context)!.section + ' *',
+                    '${AppLocalizations.of(context)!.section} *',
                     hint: '2.5',
                   ),
                   keyboardType: TextInputType.number,
@@ -723,7 +724,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: DropdownButtonFormField<CableMaterial>(
                   initialValue: _cableMaterial,
                   decoration: _buildInputDecoration(
-                      AppLocalizations.of(context)!.material + ' *'),
+                      '${AppLocalizations.of(context)!.material} *'),
                   items: CableMaterial.values
                       .map((m) => DropdownMenuItem(
                             value: m,
@@ -750,7 +751,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: TextFormField(
                   controller: _insulationTypeController,
                   decoration: _buildInputDecoration(
-                    AppLocalizations.of(context)!.insulation + ' *',
+                    '${AppLocalizations.of(context)!.insulation} *',
                     hint: 'PVC, XLPE, EPR',
                   ),
                   validator: (value) => value?.isEmpty ?? true
@@ -763,7 +764,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: TextFormField(
                   controller: _maxTempController,
                   decoration: _buildInputDecoration(
-                    AppLocalizations.of(context)!.maxTemp + ' *',
+                    '${AppLocalizations.of(context)!.maxTemp} *',
                     hint: '70',
                   ),
                   keyboardType: TextInputType.number,
@@ -810,7 +811,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: TextFormField(
                   controller: _voltageController,
                   decoration: _buildInputDecoration(
-                    AppLocalizations.of(context)!.voltage + ' *',
+                    '${AppLocalizations.of(context)!.voltage} *',
                     hint: '230',
                   ),
                   keyboardType: TextInputType.number,
@@ -824,8 +825,8 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: TextFormField(
                   controller: _maxIccController,
                   decoration: _buildInputDecoration(
-                    AppLocalizations.of(context)!.maxIcc + ' *',
-                    hint: '6',
+                    '${AppLocalizations.of(context)!.maxIcc} *',
+                    hint: '6000',
                   ),
                   keyboardType: TextInputType.number,
                   validator: (value) => double.tryParse(value ?? '') == null
@@ -842,8 +843,8 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: TextFormField(
                   controller: _ratedPowerController,
                   decoration: _buildInputDecoration(
-                    AppLocalizations.of(context)!.power + ' (kVA)',
-                    hint: '250',
+                    '${AppLocalizations.of(context)!.power} *',
+                    hint: '5750',
                   ),
                   keyboardType: TextInputType.number,
                 ),
@@ -853,7 +854,7 @@ class _ComponentDetailPageState extends State<ComponentDetailPage> {
                 child: DropdownButtonFormField<SourceType>(
                   initialValue: _sourceType,
                   decoration: _buildInputDecoration(
-                      AppLocalizations.of(context)!.type + ' *'),
+                      '${AppLocalizations.of(context)!.type} *'),
                   items: SourceType.values
                       .map((t) => DropdownMenuItem(
                             value: t,

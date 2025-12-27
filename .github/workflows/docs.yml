@@ -1,0 +1,219 @@
+name: Documentation
+
+'on':
+  push:
+    branches: [main]
+    paths:
+      - 'lib/**'
+      - 'dartdoc_options.yaml'
+      - 'storybook/**'
+      - '.github/workflows/docs.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Prevent concurrent deployments
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+  # -----------------------------------------------------------------
+  # JOB 1: Generate Dartdoc
+  # -----------------------------------------------------------------
+  generate-dartdoc:
+    name: 📖 Generate Dartdoc
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Install Dependencies
+        run: flutter pub get
+
+      - name: 🏗️ Generate Code (Required for Dartdoc)
+        run: dart run build_runner build --delete-conflicting-outputs
+
+      - name: 📖 Generate Dartdoc
+        run: dart doc .
+
+      - name: 📤 Upload Dartdoc Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dartdoc
+          path: doc/api/
+          retention-days: 7
+
+  # -----------------------------------------------------------------
+  # JOB 2: Build Storybook
+  # -----------------------------------------------------------------
+  build-storybook:
+    name: 📱 Build Storybook
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout
+        uses: actions/checkout@v4
+
+      - name: 🐦 Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          cache: true
+
+      - name: 📦 Install Dependencies
+        run: flutter pub get
+
+      - name: 🏗️ Build Storybook for Web
+        run: |
+          flutter build web \
+            --web-renderer canvaskit \
+            --base-href /Electrics-App/storybook/ \
+            -t storybook/main.dart \
+            --release
+
+      - name: 📤 Upload Storybook Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: storybook
+          path: build/web/
+          retention-days: 7
+
+  # -----------------------------------------------------------------
+  # JOB 3: Deploy to GitHub Pages
+  # -----------------------------------------------------------------
+  deploy:
+    name: 🚀 Deploy to GitHub Pages
+    needs: [generate-dartdoc, build-storybook]
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: 📥 Download Dartdoc
+        uses: actions/download-artifact@v4
+        with:
+          name: dartdoc
+          path: docs/
+
+      - name: 📥 Download Storybook
+        uses: actions/download-artifact@v4
+        with:
+          name: storybook
+          path: docs/storybook/
+
+      - name: 📋 Create Index Page
+        run: |
+          cat > docs/index.html << 'EOF'
+          <!DOCTYPE html>
+          <html lang="es">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Electrics App - Documentation</title>
+            <style>
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                max-width: 800px;
+                margin: 50px auto;
+                padding: 20px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: #333;
+              }
+              .container {
+                background: white;
+                border-radius: 12px;
+                padding: 40px;
+                box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+              }
+              h1 {
+                color: #135BEC;
+                font-size: 2.5em;
+                margin-bottom: 10px;
+              }
+              .subtitle {
+                color: #666;
+                font-size: 1.2em;
+                margin-bottom: 40px;
+              }
+              .links {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin-top: 30px;
+              }
+              .link-card {
+                background: linear-gradient(135deg, #135BEC 0%, #0a42b8 100%);
+                color: white;
+                padding: 30px;
+                border-radius: 8px;
+                text-decoration: none;
+                transition: transform 0.2s, box-shadow 0.2s;
+                text-align: center;
+              }
+              .link-card:hover {
+                transform: translateY(-5px);
+                box-shadow: 0 10px 25px rgba(19, 91, 236, 0.3);
+              }
+              .link-card h2 {
+                margin: 0 0 10px 0;
+                font-size: 1.5em;
+              }
+              .link-card p {
+                margin: 0;
+                opacity: 0.9;
+                font-size: 0.9em;
+              }
+              .badge {
+                display: inline-block;
+                background: #28a745;
+                color: white;
+                padding: 5px 15px;
+                border-radius: 20px;
+                font-size: 0.85em;
+                margin-top: 20px;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <h1>⚡ Electrics App</h1>
+              <p class="subtitle">Professional electrical engineering toolkit for REBT 2002 compliance</p>
+
+              <div class="badge">📚 Auto-generated documentation</div>
+
+              <div class="links">
+                <a href="./api/index.html" class="link-card">
+                  <h2>📖 API Documentation</h2>
+                  <p>Dartdoc technical reference</p>
+                </a>
+
+                <a href="./storybook/index.html" class="link-card">
+                  <h2>🎨 Component Library</h2>
+                  <p>Interactive Storybook UI</p>
+                </a>
+              </div>
+            </div>
+          </body>
+          </html>
+          EOF
+
+      - name: 🔧 Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: 📦 Upload Pages Artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/
+
+      - name: 🚀 Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

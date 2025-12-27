@@ -8,7 +8,7 @@ import '../bloc/user_profile_cubit.dart';
 
 /// Bottom sheet for editing user profile
 class EditProfileSheet extends StatefulWidget {
-  const EditProfileSheet({Key? key}) : super(key: key);
+  const EditProfileSheet({super.key});
 
   static Future<void> show(BuildContext context) {
     return showModalBottomSheet(

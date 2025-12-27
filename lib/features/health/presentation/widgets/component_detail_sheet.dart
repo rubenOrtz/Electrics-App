@@ -15,10 +15,10 @@ class ComponentDetailSheet extends StatelessWidget {
   final List<FieldMeasurement> measurements;
 
   const ComponentDetailSheet({
-    Key? key,
+    super.key,
     required this.node,
     this.measurements = const [],
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

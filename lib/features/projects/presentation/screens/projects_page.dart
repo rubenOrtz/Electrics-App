@@ -9,7 +9,7 @@ import '../../../settings/presentation/bloc/settings_cubit.dart';
 import 'package:electrician_app/core/presentation/widgets/coming_soon_dialog.dart';
 
 class ProjectsPage extends StatefulWidget {
-  const ProjectsPage({Key? key}) : super(key: key);
+  const ProjectsPage({super.key});
 
   @override
   State<ProjectsPage> createState() => _ProjectsPageState();

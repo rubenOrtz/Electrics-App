@@ -20,8 +20,7 @@ class HealthDashboardPage extends StatelessWidget {
   final String title;
 
   const HealthDashboardPage(
-      {Key? key, required this.projectId, required this.title})
-      : super(key: key);
+      {super.key, required this.projectId, required this.title});
 
   @override
   Widget build(BuildContext context) {

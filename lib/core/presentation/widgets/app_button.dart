@@ -1,16 +1,93 @@
 import 'package:flutter/material.dart';
 
+/// Botón primario de la aplicación con soporte para estados loading, disabled,
+/// y variantes primary/secondary.
+///
+/// **Field-UX Optimizations**:
+/// - Touch target: 56px mínimo (Material Design compliance)
+/// - Alto contrasto (#135BEC primary) para visibilidad en exteriores
+/// - Sombras pronunciadas para affordance táctil
+/// - Estados visuales claros (loading, disabled) para trabajo sin mirar
+///
+/// **Uso básico**:
+/// ```dart
+/// AppButton(
+///   text: 'Guardar Proyecto',
+///   onPressed: () => _saveProject(),
+/// )
+/// ```
+///
+/// **Con estado loading**:
+/// ```dart
+/// AppButton(
+///   text: 'Calculando...',
+///   isLoading: true,
+///   onPressed: null, // Auto-disabled durante loading
+/// )
+/// ```
+///
+/// **Botón secundario (outline)**:
+/// ```dart
+/// AppButton(
+///   text: 'Cancelar',
+///   isSecondary: true,
+///   onPressed: () => Navigator.pop(context),
+/// )
+/// ```
+///
+/// **Con icono**:
+/// ```dart
+/// AppButton(
+///   text: 'Exportar PDF',
+///   icon: Ionicons.download_outline,
+///   onPressed: () => _exportToPdf(),
+/// )
+/// ```
+///
+/// {@category Core}
+/// {@category Presentation}
+/// {@category Field-UX}
 class AppButton extends StatelessWidget {
+  /// Texto visible en el botón.
   final String text;
+
+  /// Callback ejecutado al presionar.
+  ///
+  /// Si es `null`, el botón se deshabilita automáticamente (estilo gris).
+  /// También se deshabilita si [isLoading] es `true`.
   final VoidCallback? onPressed;
+
+  /// Si `true`, muestra un [CircularProgressIndicator] y deshabilita el botón.
+  ///
+  /// Útil para operaciones asíncronas como guardado en Isar o cálculos eléctricos.
   final bool isLoading;
+
+  /// Icono opcional a la izquierda del texto.
+  ///
+  /// Usar iconos de [Ionicons] para consistencia con el Design System.
   final IconData? icon;
+
+  /// Si `true`, usa estilo secondary (transparente con borde).
+  ///
+  /// Usado para acciones no-críticas o cancelaciones.
   final bool isSecondary;
+
+  /// Color de fondo customizado (opcional).
+  ///
+  /// Por defecto:
+  /// - Primary: [Theme.primaryColor] (#135BEC)
+  /// - Secondary: Transparente
   final Color? backgroundColor;
+
+  /// Color del texto customizado (opcional).
+  ///
+  /// Por defecto:
+  /// - Primary: Blanco
+  /// - Secondary: [Theme.primaryColor]
   final Color? textColor;
 
   const AppButton({
-    Key? key,
+    super.key,
     required this.text,
     this.onPressed,
     this.isLoading = false,
@@ -18,7 +95,7 @@ class AppButton extends StatelessWidget {
     this.isSecondary = false,
     this.backgroundColor,
     this.textColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

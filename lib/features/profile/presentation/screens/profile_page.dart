@@ -8,7 +8,7 @@ import '../../../../features/settings/presentation/bloc/user_profile_cubit.dart'
 import '../../../../features/settings/domain/entities/user_profile.dart';
 
 class ProfilePage extends StatefulWidget {
-  const ProfilePage({Key? key}) : super(key: key);
+  const ProfilePage({super.key});
 
   @override
   State<ProfilePage> createState() => _ProfilePageState();

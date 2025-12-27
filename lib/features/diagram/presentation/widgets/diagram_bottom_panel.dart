@@ -12,11 +12,11 @@ class DiagramBottomPanel extends StatelessWidget {
   final VoidCallback? onEditAdvanced;
 
   const DiagramBottomPanel({
-    Key? key,
+    super.key,
     this.selectedNode,
     required this.onAddNode,
     this.onEditAdvanced,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -479,7 +479,9 @@ class DiagramBottomPanel extends StatelessWidget {
           theme,
           icon: Icons.bolt,
         ));
-      } catch (_) {}
+      } catch (_) {
+        // Ignore parsing errors
+      }
     }
 
     if (props.containsKey('loop_impedance')) {
@@ -493,7 +495,9 @@ class DiagramBottomPanel extends StatelessWidget {
           theme,
           icon: Icons.route,
         ));
-      } catch (_) {}
+      } catch (_) {
+        // Ignore parsing errors
+      }
     }
 
     if (props.containsKey('admissible_current')) {
@@ -507,7 +511,9 @@ class DiagramBottomPanel extends StatelessWidget {
           theme,
           icon: Icons.check_circle_outline,
         ));
-      } catch (_) {}
+      } catch (_) {
+        // Ignore parsing errors
+      }
     }
 
     return list;
@@ -531,10 +537,11 @@ class DiagramBottomPanel extends StatelessWidget {
 
     // Background color logic
     Color bgColor = diagramTheme.nodeBg;
-    if (isWarning)
+    if (isWarning) {
       bgColor = Colors.orange.withValues(alpha: 0.1);
-    else if (isHighlight)
+    } else if (isHighlight) {
       bgColor = diagramTheme.accentColor.withValues(alpha: 0.1);
+    }
 
     final labelColor = diagramTheme.textColor.withValues(alpha: 0.7);
     final valueColor = isWarning

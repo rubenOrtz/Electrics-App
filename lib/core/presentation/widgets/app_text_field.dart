@@ -12,7 +12,7 @@ class AppTextField extends StatelessWidget {
   final String? errorText;
 
   const AppTextField({
-    Key? key,
+    super.key,
     required this.label,
     this.initialValue,
     this.hint,
@@ -22,7 +22,7 @@ class AppTextField extends StatelessWidget {
     this.keyboardType,
     this.obscureText = false,
     this.errorText,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

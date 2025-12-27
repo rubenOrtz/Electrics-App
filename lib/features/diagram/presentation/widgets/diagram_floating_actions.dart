@@ -7,11 +7,11 @@ class DiagramFloatingActions extends StatelessWidget {
   final VoidCallback onDelete;
 
   const DiagramFloatingActions({
-    Key? key,
+    super.key,
     required this.onUndo,
     required this.onRedo,
     required this.onDelete,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -37,11 +37,11 @@ class DiagramActionButton extends StatelessWidget {
   final bool isDestructive;
 
   const DiagramActionButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.onPressed,
     this.isDestructive = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

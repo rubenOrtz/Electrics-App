@@ -1,3 +1,4 @@
+// ignore_for_file: non_constant_identifier_names
 /// Electrical engineering constants for calculations and validation
 /// Based on REBT (Spanish Low Voltage Electrical Regulations) and IEC standards
 class ElectricalConstants {
@@ -36,15 +37,15 @@ class ElectricalConstants {
 
   /// Curve B: Instantaneous trip at 3-5 times In
   /// Used for long cables and sensitive loads
-  static const double curveB_magneticMultiplier = 5.0;
+  static const double curveBMagneticMultiplier = 5.0;
 
   /// Curve C: Instantaneous trip at 5-10 times In
   /// Standard for general purpose (most common)
-  static const double curveC_magneticMultiplier = 10.0;
+  static const double curveCMagneticMultiplier = 10.0;
 
   /// Curve D: Instantaneous trip at 10-20 times In
   /// Used for inductive loads (motors, transformers)
-  static const double curveD_magneticMultiplier = 20.0;
+  static const double curveDMagneticMultiplier = 20.0;
 
   // ============================================================================
   // SHORT CIRCUIT CALCULATION
@@ -149,13 +150,13 @@ class ElectricalConstants {
   static double magneticMultiplier(String curve) {
     switch (curve.toUpperCase()) {
       case 'B':
-        return curveB_magneticMultiplier;
+        return curveBMagneticMultiplier;
       case 'C':
-        return curveC_magneticMultiplier;
+        return curveCMagneticMultiplier;
       case 'D':
-        return curveD_magneticMultiplier;
+        return curveDMagneticMultiplier;
       default:
-        return curveC_magneticMultiplier; // Default to C
+        return curveCMagneticMultiplier; // Default to C
     }
   }
 

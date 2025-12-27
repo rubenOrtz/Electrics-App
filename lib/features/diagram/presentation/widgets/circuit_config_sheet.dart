@@ -35,11 +35,11 @@ class CircuitConfigSheet extends StatefulWidget {
   final CircuitConfigData? initialData;
 
   const CircuitConfigSheet({
-    Key? key,
+    super.key,
     required this.onSave,
     this.onCancel,
     this.initialData,
-  }) : super(key: key);
+  });
 
   @override
   State<CircuitConfigSheet> createState() => _CircuitConfigSheetState();

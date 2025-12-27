@@ -6,7 +6,7 @@ import '../../../../features/projects/presentation/bloc/project_cubit.dart';
 import 'package:electrician_app/core/presentation/widgets/coming_soon_dialog.dart';
 
 class CalculationsPage extends StatelessWidget {
-  const CalculationsPage({Key? key}) : super(key: key);
+  const CalculationsPage({super.key});
 
   @override
   Widget build(BuildContext context) {

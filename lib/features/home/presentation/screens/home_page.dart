@@ -9,7 +9,7 @@ import '../../../../core/presentation/widgets/beta_feature_banner.dart';
 class HomePage extends StatelessWidget {
   final Function(int)? onNavigateToTab;
 
-  const HomePage({Key? key, this.onNavigateToTab}) : super(key: key);
+  const HomePage({super.key, this.onNavigateToTab});
 
   String _getGreeting(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;

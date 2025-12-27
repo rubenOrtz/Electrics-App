@@ -7,10 +7,10 @@ class HealthCheckPanel extends StatelessWidget {
   final VoidCallback? onViewDiagram;
 
   const HealthCheckPanel({
-    Key? key,
+    super.key,
     this.root,
     this.onViewDiagram,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

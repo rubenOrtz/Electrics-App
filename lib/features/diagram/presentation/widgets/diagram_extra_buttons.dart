@@ -9,10 +9,10 @@ class DiagramZoomButtons extends StatelessWidget {
   final VoidCallback onZoomOut;
 
   const DiagramZoomButtons({
-    Key? key,
+    super.key,
     required this.onZoomIn,
     required this.onZoomOut,
-  }) : super(key: key);
+  });
 
   bool _isHighContrastMode(BuildContext context) {
     final themeState = context.watch<ThemeCubit>().state;
@@ -109,9 +109,9 @@ class DiagramThemeButton extends StatelessWidget {
   final VoidCallback onToggle;
 
   const DiagramThemeButton({
-    Key? key,
+    super.key,
     required this.onToggle,
-  }) : super(key: key);
+  });
 
   bool _isHighContrastMode(BuildContext context) {
     final themeState = context.watch<ThemeCubit>().state;

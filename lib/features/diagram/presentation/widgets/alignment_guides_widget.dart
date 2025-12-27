@@ -7,11 +7,11 @@ class AlignmentGuidesWidget extends StatelessWidget {
   final Color lineColor;
 
   const AlignmentGuidesWidget({
-    Key? key,
+    super.key,
     required this.verticalLines,
     required this.horizontalLines,
     this.lineColor = const Color(0xFFFF9800),
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

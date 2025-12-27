@@ -5,7 +5,7 @@ import '../../domain/usecases/electrical_math.dart';
 import 'package:electrician_app/l10n/app_localizations.dart';
 
 class VoltageDropPage extends StatefulWidget {
-  const VoltageDropPage({Key? key}) : super(key: key);
+  const VoltageDropPage({super.key});
 
   @override
   State<VoltageDropPage> createState() => _VoltageDropPageState();

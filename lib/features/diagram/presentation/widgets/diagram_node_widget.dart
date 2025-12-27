@@ -11,7 +11,7 @@ class DiagramNodeWidget extends StatelessWidget {
   final Function(DiagramNode) onSelect;
   final Function(NodeType, DiagramNode) onAddChild;
 
-  DiagramNodeWidget({
+  const DiagramNodeWidget({
     super.key,
     required this.node,
     required this.isSelected,

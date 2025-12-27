@@ -13,10 +13,10 @@ class ManualEntryForm extends StatefulWidget {
   final Function(FieldMeasurement) onSave;
 
   const ManualEntryForm({
-    Key? key,
+    super.key,
     required this.node,
     required this.onSave,
-  }) : super(key: key);
+  });
 
   @override
   State<ManualEntryForm> createState() => _ManualEntryFormState();

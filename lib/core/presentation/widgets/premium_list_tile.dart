@@ -11,7 +11,7 @@ class PremiumListTile extends StatelessWidget {
   final bool showChevron;
 
   const PremiumListTile({
-    Key? key,
+    super.key,
     required this.icon,
     this.iconColor = Colors.blue,
     this.iconGradient,
@@ -20,7 +20,7 @@ class PremiumListTile extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.showChevron = true,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -120,7 +120,7 @@ class PremiumListTile extends StatelessWidget {
 class PremiumSectionHeader extends StatelessWidget {
   final String title;
 
-  const PremiumSectionHeader({Key? key, required this.title}) : super(key: key);
+  const PremiumSectionHeader({super.key, required this.title});
 
   @override
   Widget build(BuildContext context) {

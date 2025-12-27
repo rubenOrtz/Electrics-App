@@ -67,10 +67,6 @@ void main() {
       final protectionV = resultProtection.state.voltageVolts;
       final loadV = resultLoad.state.voltageVolts;
 
-      print('SourceV (Nominal): $sourceV'); // Debe ser 230V
-      print('ProtectionV (Input): $protectionV'); // Debe ser ~226.5V
-      print('LoadV (End): $loadV'); // Debe ser ~223V
-
       // --- VALIDACIONES FÍSICAS CORREGIDAS ---
 
       // 1. La Fuente mantiene su tensión nominal (Infine Bus)

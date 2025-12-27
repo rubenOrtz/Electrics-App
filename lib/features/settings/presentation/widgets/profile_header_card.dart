@@ -10,9 +10,9 @@ class ProfileHeaderCard extends StatelessWidget {
   final VoidCallback onEditTap;
 
   const ProfileHeaderCard({
-    Key? key,
+    super.key,
     required this.onEditTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

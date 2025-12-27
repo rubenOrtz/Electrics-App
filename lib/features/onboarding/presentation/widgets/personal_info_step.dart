@@ -4,7 +4,7 @@ import '../bloc/onboarding_cubit.dart';
 import '../../domain/utils/validators.dart';
 
 class PersonalInfoStep extends StatefulWidget {
-  const PersonalInfoStep({Key? key}) : super(key: key);
+  const PersonalInfoStep({super.key});
 
   @override
   State<PersonalInfoStep> createState() => _PersonalInfoStepState();

@@ -4,7 +4,7 @@ import '../bloc/onboarding_cubit.dart';
 import '../../domain/utils/validators.dart';
 
 class CompanyInfoStep extends StatefulWidget {
-  const CompanyInfoStep({Key? key}) : super(key: key);
+  const CompanyInfoStep({super.key});
 
   @override
   State<CompanyInfoStep> createState() => _CompanyInfoStepState();

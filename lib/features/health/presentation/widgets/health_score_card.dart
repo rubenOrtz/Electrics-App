@@ -7,9 +7,9 @@ class HealthScoreCard extends StatelessWidget {
   final InstallationHealth health;
 
   const HealthScoreCard({
-    Key? key,
+    super.key,
     required this.health,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

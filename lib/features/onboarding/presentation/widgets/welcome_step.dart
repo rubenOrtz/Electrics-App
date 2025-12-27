@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../config/theme/app_themes.dart';
 
 class WelcomeStep extends StatelessWidget {
-  const WelcomeStep({Key? key}) : super(key: key);
+  const WelcomeStep({super.key});
 
   @override
   Widget build(BuildContext context) {

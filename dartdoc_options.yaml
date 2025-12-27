@@ -1,0 +1,33 @@
+dartdoc:
+  # Orden de categorías para mejor navegación
+  categoryOrder:
+    - "Core"
+    - "Features"
+    - "Domain"
+    - "Data"
+    - "Presentation"
+    - "Field-UX"
+
+  # Excluir archivos generados automáticamente
+  exclude:
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - "**/injection_container.dart"
+    - "**/*.config.dart"
+    - "**/storybook/**"
+
+  # Mostrar categorías sin documentar para identificar gaps
+  showUndocumentedCategories: true
+
+  # Enlaces directos al código fuente en GitHub
+  linkToSource:
+    root: '.'
+    uriTemplate: 'https://github.com/rubenOrtz/Electrics-App/blob/main/%f%#L%l%'
+
+  # Configuración de errores y warnings
+  errors:
+    - unresolved-doc-reference
+
+  warnings:
+    - ambiguous-doc-reference
+    - tool-error

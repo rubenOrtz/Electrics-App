@@ -11,7 +11,7 @@ import 'manual_entry_form.dart';
 /// Pantalla para seleccionar un componente del diagrama
 /// y agregar una medición manual
 class ComponentSelectorPage extends StatefulWidget {
-  const ComponentSelectorPage({Key? key}) : super(key: key);
+  const ComponentSelectorPage({super.key});
 
   @override
   State<ComponentSelectorPage> createState() => _ComponentSelectorPageState();

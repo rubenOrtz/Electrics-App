@@ -9,12 +9,12 @@ class NodeStatusBadge extends StatefulWidget {
   final VoidCallback? onTap;
 
   const NodeStatusBadge({
-    Key? key,
+    super.key,
     required this.status,
     this.errors = const [],
     this.warnings = const [],
     this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   State<NodeStatusBadge> createState() => _NodeStatusBadgeState();

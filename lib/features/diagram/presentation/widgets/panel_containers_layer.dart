@@ -90,13 +90,13 @@ class PanelContainersLayer extends StatelessWidget {
   final Color? textColor;
 
   const PanelContainersLayer({
-    Key? key,
+    super.key,
     required this.panelRects,
     required this.panelNames,
     this.borderColor,
     this.fillColor,
     this.textColor,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

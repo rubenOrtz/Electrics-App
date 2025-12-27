@@ -10,11 +10,11 @@ class InsightCard extends StatelessWidget {
   final VoidCallback? onNodeTap;
 
   const InsightCard({
-    Key? key,
+    super.key,
     required this.insight,
     this.onActionTap,
     this.onNodeTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -3,7 +3,7 @@ import '../../../../config/theme/app_themes.dart';
 import 'package:electrician_app/l10n/app_localizations.dart';
 
 class HelpPage extends StatelessWidget {
-  const HelpPage({Key? key}) : super(key: key);
+  const HelpPage({super.key});
 
   @override
   Widget build(BuildContext context) {

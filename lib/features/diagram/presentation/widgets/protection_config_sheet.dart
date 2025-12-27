@@ -17,11 +17,11 @@ class ProtectionConfigSheet extends StatefulWidget {
   final ProtectionConfigData? initialData;
 
   const ProtectionConfigSheet({
-    Key? key,
+    super.key,
     required this.onSave,
     this.onCancel,
     this.initialData,
-  }) : super(key: key);
+  });
 
   @override
   State<ProtectionConfigSheet> createState() => _ProtectionConfigSheetState();

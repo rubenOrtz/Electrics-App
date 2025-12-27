@@ -12,7 +12,7 @@ void showComingSoon(BuildContext context, {String? featureName}) {
 class ComingSoonDialog extends StatefulWidget {
   final String? featureName;
 
-  const ComingSoonDialog({Key? key, this.featureName}) : super(key: key);
+  const ComingSoonDialog({super.key, this.featureName});
 
   @override
   State<ComingSoonDialog> createState() => _ComingSoonDialogState();

@@ -11,7 +11,7 @@ class DiagramTopBar extends StatelessWidget {
   final bool isSelectionMode;
 
   const DiagramTopBar({
-    Key? key,
+    super.key,
     required this.title,
     required this.subtitle,
     required this.onBackPressed,
@@ -19,7 +19,7 @@ class DiagramTopBar extends StatelessWidget {
     required this.onBudgetPressed,
     required this.onTabChanged,
     this.isSelectionMode = false,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

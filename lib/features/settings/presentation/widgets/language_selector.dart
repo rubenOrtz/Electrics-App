@@ -5,7 +5,7 @@ import '../bloc/settings_cubit.dart';
 
 /// Dialog for selecting app language
 class LanguageSelector extends StatelessWidget {
-  const LanguageSelector({Key? key}) : super(key: key);
+  const LanguageSelector({super.key});
 
   static Future<void> show(BuildContext context) {
     return showDialog(

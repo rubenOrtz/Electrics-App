@@ -9,37 +9,33 @@ abstract class Failure extends Equatable {
 }
 
 class CacheFailure extends Failure {
-  const CacheFailure([String message = 'Error de caché']) : super(message);
+  const CacheFailure([super.message = 'Error de caché']);
 }
 
 class DatabaseFailure extends Failure {
-  const DatabaseFailure([String message = 'Error de base de datos'])
-      : super(message);
+  const DatabaseFailure([super.message = 'Error de base de datos']);
 }
 
 class ServerFailure extends Failure {
-  const ServerFailure([String message = 'Error del servidor']) : super(message);
+  const ServerFailure([super.message = 'Error del servidor']);
 }
 
 class NetworkFailure extends Failure {
-  const NetworkFailure([String message = 'Error de conexión']) : super(message);
+  const NetworkFailure([super.message = 'Error de conexión']);
 }
 
 class ValidationFailure extends Failure {
-  const ValidationFailure([String message = 'Datos inválidos'])
-      : super(message);
+  const ValidationFailure([super.message = 'Datos inválidos']);
 }
 
 class UnknownFailure extends Failure {
-  const UnknownFailure([String message = 'Error desconocido']) : super(message);
+  const UnknownFailure([super.message = 'Error desconocido']);
 }
 
 class NotFoundFailure extends Failure {
-  const NotFoundFailure([String message = 'Elemento no encontrado'])
-      : super(message);
+  const NotFoundFailure([super.message = 'Elemento no encontrado']);
 }
 
 class UnauthorizedFailure extends Failure {
-  const UnauthorizedFailure([String message = 'No autorizado'])
-      : super(message);
+  const UnauthorizedFailure([super.message = 'No autorizado']);
 }

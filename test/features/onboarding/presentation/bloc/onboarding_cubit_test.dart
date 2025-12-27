@@ -56,7 +56,7 @@ void main() {
       when(() => mockSaveDataUseCase(
             profile: any(named: 'profile'),
             preferences: any(named: 'preferences'),
-          )).thenAnswer((_) async => const Right(true));
+          )).thenAnswer((_) async => const Right(null));
 
       // Act
       final result = await cubit.completeOnboarding();

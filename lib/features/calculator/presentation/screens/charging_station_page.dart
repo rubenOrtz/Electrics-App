@@ -8,7 +8,7 @@ import '../../domain/services/cable_service.dart';
 import 'package:electrician_app/core/presentation/widgets/beta_feature_banner.dart';
 
 class ChargingStationPage extends StatefulWidget {
-  const ChargingStationPage({Key? key}) : super(key: key);
+  const ChargingStationPage({super.key});
 
   @override
   State<ChargingStationPage> createState() => _ChargingStationPageState();

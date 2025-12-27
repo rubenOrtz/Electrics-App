@@ -5,8 +5,7 @@ import '../../../../features/projects/domain/entities/budget_config.dart';
 class BudgetConfigDialog extends StatefulWidget {
   final BudgetConfig initialConfig;
 
-  const BudgetConfigDialog({Key? key, required this.initialConfig})
-      : super(key: key);
+  const BudgetConfigDialog({super.key, required this.initialConfig});
 
   @override
   State<BudgetConfigDialog> createState() => _BudgetConfigDialogState();

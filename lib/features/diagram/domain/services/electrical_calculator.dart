@@ -1,3 +1,4 @@
+// ignore_for_file: non_constant_identifier_names, constant_identifier_names
 import 'dart:math';
 import '../entities/electrical_node.dart';
 import '../entities/calculation_result.dart';
@@ -7,6 +8,7 @@ import '../entities/conductor_attributes.dart';
 import 'package:electrician_app/features/diagram/domain/entities/electrical_enums.dart'
     as enums;
 import 'validation_engine.dart';
+
 import 'iz_constants.dart';
 import '../../../../core/constants/electrical_constants.dart';
 
@@ -141,11 +143,11 @@ class ElectricalCalculator {
       } else {
         // Nearest/Interp
         final keys = tempTable.keys.toList()..sort();
-        if (temp <= keys.first)
+        if (temp <= keys.first) {
           kTemp = tempTable[keys.first]!;
-        else if (temp >= keys.last)
+        } else if (temp >= keys.last) {
           kTemp = tempTable[keys.last]!;
-        else {
+        } else {
           for (int i = 0; i < keys.length - 1; i++) {
             if (temp > keys[i] && temp < keys[i + 1]) {
               final t1 = keys[i];
@@ -183,11 +185,11 @@ class ElectricalCalculator {
         kSoil = IzConstants.soilResistivityTable[resistivity]!;
       } else {
         final rKeys = IzConstants.soilResistivityTable.keys.toList()..sort();
-        if (resistivity <= rKeys.first)
+        if (resistivity <= rKeys.first) {
           kSoil = IzConstants.soilResistivityTable[rKeys.first]!;
-        else if (resistivity >= rKeys.last)
+        } else if (resistivity >= rKeys.last) {
           kSoil = IzConstants.soilResistivityTable[rKeys.last]!;
-        else {
+        } else {
           for (int i = 0; i < rKeys.length - 1; i++) {
             if (resistivity > rKeys[i] && resistivity < rKeys[i + 1]) {
               final r1 = rKeys[i];
@@ -354,8 +356,8 @@ class ElectricalCalculator {
       return _BottomUpResult.zero();
     }
 
-    const Ks = ElectricalConstants.defaultSimultaneityFactor;
-    final S = sqrt(totalP * totalP + totalQ * totalQ) * Ks;
+    const ks = ElectricalConstants.defaultSimultaneityFactor;
+    final S = sqrt(totalP * totalP + totalQ * totalQ) * ks;
     final cosPhi = totalP / S;
 
     double Ib = 0.0;
@@ -368,8 +370,8 @@ class ElectricalCalculator {
 
     return _BottomUpResult(
       designCurrent: Ib,
-      activePower: totalP * Ks,
-      reactivePower: totalQ * Ks,
+      activePower: totalP * ks,
+      reactivePower: totalQ * ks,
       apparentPower: S,
       powerFactor: cosPhi,
     );

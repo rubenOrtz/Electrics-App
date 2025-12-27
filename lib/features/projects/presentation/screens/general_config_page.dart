@@ -5,7 +5,7 @@ import '../../../../features/compliance/domain/compliance_registry.dart';
 import '../../../../l10n/app_localizations.dart';
 
 class GeneralConfigPage extends StatefulWidget {
-  const GeneralConfigPage({Key? key}) : super(key: key);
+  const GeneralConfigPage({super.key});
 
   @override
   State<GeneralConfigPage> createState() => _GeneralConfigPageState();

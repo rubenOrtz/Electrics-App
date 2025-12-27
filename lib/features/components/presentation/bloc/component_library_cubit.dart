@@ -183,9 +183,4 @@ class ComponentLibraryCubit extends Cubit<ComponentLibraryState> {
     }
     return loadAll();
   }
-
-  @override
-  Future<void> close() {
-    return super.close();
-  }
 }

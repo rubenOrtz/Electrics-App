@@ -11,9 +11,9 @@ class ProtectionCatalogDialog extends StatefulWidget {
   final ProtectionDeviceType initialType;
 
   const ProtectionCatalogDialog({
-    Key? key,
+    super.key,
     required this.initialType,
-  }) : super(key: key);
+  });
 
   @override
   State<ProtectionCatalogDialog> createState() =>

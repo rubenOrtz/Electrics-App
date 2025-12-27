@@ -8,7 +8,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../reports/domain/services/document_service.dart';
 
 class DocumentGenerationPage extends StatefulWidget {
-  const DocumentGenerationPage({Key? key}) : super(key: key);
+  const DocumentGenerationPage({super.key});
 
   @override
   State<DocumentGenerationPage> createState() => _DocumentGenerationPageState();

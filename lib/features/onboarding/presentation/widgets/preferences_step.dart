@@ -7,7 +7,7 @@ import 'package:electrician_app/features/settings/domain/entities/app_theme_mode
 import '../../../../config/theme/theme_cubit.dart';
 
 class PreferencesStep extends StatelessWidget {
-  const PreferencesStep({Key? key}) : super(key: key);
+  const PreferencesStep({super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -13,7 +13,7 @@ import '../../../reports/data/generators/budget_pdf_generator.dart';
 import '../../../../features/projects/domain/entities/project.dart';
 
 class BudgetPage extends StatefulWidget {
-  const BudgetPage({Key? key}) : super(key: key);
+  const BudgetPage({super.key});
 
   @override
   State<BudgetPage> createState() => _BudgetPageState();
@@ -318,34 +318,31 @@ class _BudgetPageState extends State<BudgetPage>
                     color: Colors.grey),
               ),
             ),
-            ...items
-                .map((item) => Card(
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.grey.shade200)),
-                      margin: const EdgeInsets.only(bottom: 8),
-                      child: ListTile(
-                        leading: CircleAvatar(
-                          backgroundColor: _getCategoryColor(item.category)
-                              .withValues(alpha: 0.1),
-                          child: Icon(_getCategoryIcon(item.category),
-                              color: _getCategoryColor(item.category),
-                              size: 20),
-                        ),
-                        title: Text(item.name,
-                            style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14)),
-                        subtitle: Text(
-                            "${item.description}  x  ${item.unitPrice.toStringAsFixed(2)} €/ud"),
-                        trailing: Text(
-                          "${item.total.toStringAsFixed(2)} €",
-                          style: const TextStyle(
-                              fontSize: 16, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ))
-                .toList(),
+            ...items.map((item) => Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(color: Colors.grey.shade200)),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: _getCategoryColor(item.category)
+                          .withValues(alpha: 0.1),
+                      child: Icon(_getCategoryIcon(item.category),
+                          color: _getCategoryColor(item.category), size: 20),
+                    ),
+                    title: Text(item.name,
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 14)),
+                    subtitle: Text(
+                        "${item.description}  x  ${item.unitPrice.toStringAsFixed(2)} €/ud"),
+                    trailing: Text(
+                      "${item.total.toStringAsFixed(2)} €",
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                )),
             const SizedBox(height: 16),
           ],
         );
@@ -398,6 +395,10 @@ class _BudgetPageState extends State<BudgetPage>
     );
 
     if (newConfig != null) {
+      // Capture cubit before async gap
+      if (!context.mounted) return;
+      final budgetCubit = context.read<BudgetCubit>();
+
       projectCubit.updateBudgetConfig(newConfig);
       await projectCubit.saveProject();
 
@@ -405,7 +406,7 @@ class _BudgetPageState extends State<BudgetPage>
       // Reload budget with new config
       final root = projectCubit.state.root;
       if (root != null) {
-        context.read<BudgetCubit>().loadBudget(root, config: newConfig);
+        budgetCubit.loadBudget(root, config: newConfig);
       }
     }
   }

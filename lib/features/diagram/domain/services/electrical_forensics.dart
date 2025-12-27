@@ -1,3 +1,4 @@
+// ignore_for_file: non_constant_identifier_names
 import '../entities/electrical_node.dart';
 import '../entities/forensic_finding.dart';
 import '../entities/measurement_state.dart';
@@ -178,7 +179,7 @@ class ElectricalForensics {
         code: 'MAGNETIC_FAILURE',
         title: 'Fallo protección magnética',
         description:
-            'La impedancia de bucle ($Zs Ω) es muy alta. El PIA ${curve}${In.toInt()} no disparará ante un cortocircuito en punta (Req: < ${maxZs.toStringAsFixed(2)} Ω).',
+            'La impedancia de bucle ($Zs Ω) es muy alta. El PIA $curve${In.toInt()} no disparará ante un cortocircuito en punta (Req: < ${maxZs.toStringAsFixed(2)} Ω).',
         severity: FindingSeverity.critical,
         measuredValue: Zs,
         theoreticalValue: maxZs,

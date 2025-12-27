@@ -10,11 +10,11 @@ class TripCurveViewer extends StatefulWidget {
   final bool showGrid;
 
   const TripCurveViewer({
-    Key? key,
+    super.key,
     required this.protection,
     this.height,
     this.showGrid = true,
-  }) : super(key: key);
+  });
 
   @override
   State<TripCurveViewer> createState() => _TripCurveViewerState();

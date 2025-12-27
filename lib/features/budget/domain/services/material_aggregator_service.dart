@@ -126,7 +126,9 @@ class MaterialAggregatorService {
               );
             },
           );
-        } catch (_) {}
+        } catch (_) {
+          // Ignore errors when fetching component details
+        }
       }
 
       items.add(BudgetItem(
@@ -194,7 +196,9 @@ class MaterialAggregatorService {
             price = c.price ?? 0.0;
           });
         }
-      } catch (e) {}
+      } catch (e) {
+        // Ignore errors during sorting or lookup
+      }
 
       name = _cleanName(name);
 
