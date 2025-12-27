@@ -31,7 +31,7 @@
 </p>
 
 > [!WARNING] 
-> Es ilegal el uso con fines lucrativos o comercial de este producto. Seguimos APGL-3.0. Lee la licencia.
+> Estamos trabajando en su lanzamiento en Play Store & App Store. DE momento, puedes descargar la última release en Github ya compilada.
 ---
 
 ## 🛠️ ¿Por qué Electrics-App?
