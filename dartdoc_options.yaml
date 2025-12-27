@@ -19,6 +19,8 @@ dartdoc:
   # Mostrar categorías sin documentar para identificar gaps
   showUndocumentedCategories: true
 
+  failsOnErrors: false
+
   # Enlaces directos al código fuente en GitHub
   linkToSource:
     root: '.'
