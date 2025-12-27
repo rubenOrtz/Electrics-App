@@ -117,6 +117,18 @@ Simplemente, descárgate la última actualización
   <p><i>Pre Release v1.0.0</i></p>
 </div>
 
+## 🌐 Live Demo & Documentation
+
+Puedes explorar el catálogo de componentes y la documentación técnica del código en los siguientes enlaces:
+
+| Recurso | Enlace | Descripción |
+| :--- | :--- | :--- |
+| **🚀 Landing Page** | [Visitar Web](https://rubenortz.github.io/Electrics-App/) | Portal central de documentación |
+| **🎨 Storybook** | [Explorar UI](https://rubenortz.github.io/Electrics-App/storybook/) | Catálogo interactivo de componentes Flutter |
+| **📚 API Reference** | [Leer API](https://rubenortz.github.io/Electrics-App/api/) | Documentación técnica generada con Dartdoc |
+
+Recuerda hecharle un vistazo a la Wiki!
+
 ---
 
 ## 🤝 Buscamos Talento (Contribuir)
