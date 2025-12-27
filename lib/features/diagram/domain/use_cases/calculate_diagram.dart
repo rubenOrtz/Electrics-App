@@ -91,13 +91,16 @@ List<CalculationError> _extractValidationErrors(ElectricalNode node) {
   }
 
   // Recursión para hijos usando expand para aplanar
-  final childErrors = node.map(
-    source: (n) => n.children.expand((child) => _extractValidationErrors(child)),
-    panel: (n) => n.children.expand((child) => _extractValidationErrors(child)),
-    protection: (n) => n.children.expand((child) => _extractValidationErrors(child)),
-    load: (_) => <CalculationError>[],
+  final children = node.map(
+    source: (n) => n.children,
+    panel: (n) => n.children,
+    protection: (n) => n.children,
+    load: (_) => <ElectricalNode>[],
   );
 
-  errors.addAll(childErrors);
+  errors.addAll(
+    children.expand((child) => _extractValidationErrors(child)),
+  );
+
   return errors;
 }
