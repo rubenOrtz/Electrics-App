@@ -103,31 +103,46 @@ class MaterialAggregatorService {
       return ratingA.compareTo(ratingB);
     });
 
+    // Fetch all protection details in parallel for better performance
+    final catalogKeys = protKeys.where((k) => !k.startsWith('GEN-')).toList();
+    final repository = componentRepository; // Capture repository reference for async callbacks
+    
+    final protectionDetailsFutures = catalogKeys.map((key) async {
+      if (repository == null) return null;
+      try {
+        final result = await repository.getById(key);
+        return result.fold(
+          (l) => null,
+          (comp) => MapEntry(key, comp),
+        );
+      } catch (_) {
+        return null;
+      }
+    });
+    
+    final protectionDetailsResults = await Future.wait(protectionDetailsFutures);
+    final protectionDetailsMap = Map.fromEntries(
+      protectionDetailsResults.whereType<MapEntry<String, ComponentTemplate>>(),
+    );
+
     for (var key in protKeys) {
       final count = protectionQuantities[key]!;
       var name = protectionNames[key] ?? key;
       double price = 0.0;
 
       // Lookup real name if it's a catalog ID
-      if (!key.startsWith('GEN-') && componentRepository != null) {
-        try {
-          final result = await componentRepository!.getById(key);
-          result.fold(
-            (l) => null,
-            (comp) {
-              final manu = comp.manufacturer ?? "";
-              final model = comp.name;
-              name = "$manu $model".trim();
+      if (!key.startsWith('GEN-') && protectionDetailsMap.containsKey(key)) {
+        final comp = protectionDetailsMap[key];
+        if (comp != null) {
+          final manu = comp.manufacturer ?? "";
+          final model = comp.name;
+          name = "$manu $model".trim();
 
-              // Capture price from library
-              comp.maybeMap(
-                protection: (p) => price = p.price ?? 0.0,
-                orElse: () {},
-              );
-            },
+          // Capture price from library
+          comp.maybeMap(
+            protection: (p) => price = p.price ?? 0.0,
+            orElse: () {},
           );
-        } catch (_) {
-          // Ignore errors when fetching component details
         }
       }
 

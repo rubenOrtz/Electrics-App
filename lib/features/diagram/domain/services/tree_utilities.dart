@@ -75,24 +75,17 @@ class TreeUtilities {
   static List<ElectricalNode> flattenElectricalNodes(ElectricalNode? root) {
     if (root == null) return [];
 
-    final List<ElectricalNode> nodes = [root];
-
-    root.map(
-      source: (node) => nodes.addAll(_flattenChildren(node.children)),
-      protection: (node) => nodes.addAll(_flattenChildren(node.children)),
-      panel: (node) => nodes.addAll(_flattenChildren(node.children)),
-      load: (_) {}, // Load has no children
+    final children = root.map(
+      source: (node) => node.children,
+      protection: (node) => node.children,
+      panel: (node) => node.children,
+      load: (_) => <ElectricalNode>[],
     );
 
-    return nodes;
-  }
-
-  static List<ElectricalNode> _flattenChildren(List<ElectricalNode> children) {
-    final List<ElectricalNode> result = [];
-    for (final child in children) {
-      result.addAll(flattenElectricalNodes(child));
-    }
-    return result;
+    return [
+      root,
+      ...children.expand((child) => flattenElectricalNodes(child)),
+    ];
   }
 
   /// Extract panel names from tree
@@ -303,19 +296,10 @@ class TreeUtilities {
 
   static List<ElectricalNode> _removeNodeFromChildren(
       List<ElectricalNode> children, String idToRemove) {
-    final List<ElectricalNode> newChildren = [];
-    for (final child in children) {
-      if (child.id == idToRemove) {
-        // Skip this child (remove it)
-        continue;
-      }
-
-      // Recursively check children
-      final newChild = removeNodeFromTree(child, idToRemove);
-      if (newChild != null) {
-        newChildren.add(newChild);
-      }
-    }
-    return newChildren;
+    return children
+        .where((child) => child.id != idToRemove)
+        .map((child) => removeNodeFromTree(child, idToRemove))
+        .whereType<ElectricalNode>() // Filters out null values
+        .toList();
   }
 }

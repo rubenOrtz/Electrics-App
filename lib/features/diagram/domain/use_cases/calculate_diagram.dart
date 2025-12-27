@@ -73,43 +73,33 @@ List<CalculationError> _extractValidationErrors(ElectricalNode node) {
 
   // Convertir ValidationErrors a CalculationErrors
   if (result != null) {
-    for (final error in result.errors) {
-      errors.add(CalculationError(
+    errors.addAll(
+      result.errors.map((error) => CalculationError(
         nodeId: node.id,
         message: error.message,
         severity: 'error',
-      ));
-    }
+      )),
+    );
 
-    for (final warning in result.warnings) {
-      errors.add(CalculationError(
+    errors.addAll(
+      result.warnings.map((warning) => CalculationError(
         nodeId: node.id,
         message: warning.message,
         severity: 'warning',
-      ));
-    }
+      )),
+    );
   }
 
-  // Recursión para hijos
-  node.map(
-    source: (n) {
-      for (final child in n.children) {
-        errors.addAll(_extractValidationErrors(child));
-      }
-    },
-    panel: (n) {
-      for (final child in n.children) {
-        errors.addAll(_extractValidationErrors(child));
-      }
-    },
-    protection: (n) {
-      for (final child in n.children) {
-        errors.addAll(_extractValidationErrors(child));
-      }
-    },
-    load: (_) {
-      // Loads no tienen hijos
-    },
+  // Recursión para hijos usando expand para aplanar
+  final children = node.map(
+    source: (n) => n.children,
+    panel: (n) => n.children,
+    protection: (n) => n.children,
+    load: (_) => <ElectricalNode>[],
+  );
+
+  errors.addAll(
+    children.expand((child) => _extractValidationErrors(child)),
   );
 
   return errors;

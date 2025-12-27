@@ -17,12 +17,24 @@ class PricingEngine {
     final rawItems = await aggregator.aggregate(root);
     final effectiveConfig = config ?? const BudgetConfig();
 
-    // 2. Apply Prices
+    // 2. Fetch all prices in parallel for better performance
+    // Note: rawItems should have unique IDs by design (one entry per component type)
+    final priceIds = rawItems.map((item) => item.id).toList();
+    final priceFutures = priceIds.map((id) => repository.getPrice(id));
+    final fetchedPrices = await Future.wait(priceFutures);
+    
+    // Create price map for O(1) lookup
+    final priceMap = Map<String, double>.fromIterables(
+      priceIds,
+      fetchedPrices.map((p) => p ?? 0.0),
+    );
+
+    // 3. Apply Prices
     List<BudgetItem> pricedItems = [];
     double materialSubtotal = 0;
 
     for (var item in rawItems) {
-      double price = await repository.getPrice(item.id) ?? 0.0;
+      double price = priceMap[item.id] ?? 0.0;
 
       // Use price from aggregator (Library Resolution) if repository didn't return one
       if (price == 0.0 && item.unitPrice > 0) {
@@ -47,7 +59,7 @@ class PricingEngine {
       materialSubtotal += budgetItem.total;
     }
 
-    // 3. Add Extras (Small Material)
+    // 4. Add Extras (Small Material)
     if (effectiveConfig.smallMaterialPercent > 0) {
       final smallMatCost =
           materialSubtotal * (effectiveConfig.smallMaterialPercent / 100);

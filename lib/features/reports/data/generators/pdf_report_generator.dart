@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import '../../../diagram/domain/entities/electrical_node.dart';
+import '../../../diagram/domain/services/tree_utilities.dart';
 
 class PdfReportGenerator {
   final ElectricalNode rootNode;
@@ -125,7 +126,7 @@ class PdfReportGenerator {
     ));
 
     // Data - Traverse tree to flatten list
-    final nodes = _flattenTree(rootNode);
+    final nodes = TreeUtilities.flattenElectricalNodes(rootNode);
 
     for (var i = 0; i < nodes.length; i++) {
       final node = nodes[i];
@@ -169,28 +170,6 @@ class PdfReportGenerator {
     );
   }
 
-  List<ElectricalNode> _flattenTree(ElectricalNode node) {
-    final list = [node];
-    node.map(
-      source: (n) {
-        for (var c in n.children) {
-          list.addAll(_flattenTree(c));
-        }
-      },
-      panel: (n) {
-        for (var c in n.children) {
-          list.addAll(_flattenTree(c));
-        }
-      },
-      protection: (n) {
-        for (var c in n.children) {
-          list.addAll(_flattenTree(c));
-        }
-      },
-      load: (_) {},
-    );
-    return list;
-  }
 
   pw.Widget _buildCell(String text,
       {bool isHeader = false, PdfColor color = PdfColors.black}) {
