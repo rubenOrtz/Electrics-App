@@ -298,11 +298,8 @@ class TreeUtilities {
       List<ElectricalNode> children, String idToRemove) {
     return children
         .where((child) => child.id != idToRemove)
-        .map((child) {
-          final newChild = removeNodeFromTree(child, idToRemove);
-          return newChild;
-        })
-        .whereType<ElectricalNode>()
+        .map((child) => removeNodeFromTree(child, idToRemove))
+        .whereType<ElectricalNode>() // Filters out null values
         .toList();
   }
 }

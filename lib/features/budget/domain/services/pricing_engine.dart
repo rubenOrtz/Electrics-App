@@ -18,6 +18,7 @@ class PricingEngine {
     final effectiveConfig = config ?? const BudgetConfig();
 
     // 2. Fetch all prices in parallel for better performance
+    // Note: rawItems should have unique IDs by design (one entry per component type)
     final priceIds = rawItems.map((item) => item.id).toList();
     final priceFutures = priceIds.map((id) => repository.getPrice(id));
     final fetchedPrices = await Future.wait(priceFutures);
