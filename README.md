@@ -31,7 +31,7 @@
 </p>
 
 > [!WARNING] 
-> Estamos trabajando en su lanzamiento en Play Store & App Store. DE momento, puedes descargar la última release en Github ya compilada.
+> Estamos trabajando en su lanzamiento en Play Store & App Store. De momento, puedes descargar la última release en Github ya compilada.
 ---
 
 ## 🛠️ ¿Por qué Electrics-App?
