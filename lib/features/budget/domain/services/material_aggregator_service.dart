@@ -105,7 +105,7 @@ class MaterialAggregatorService {
 
     // Fetch all protection details in parallel for better performance
     final catalogKeys = protKeys.where((k) => !k.startsWith('GEN-')).toList();
-    final repository = componentRepository; // Local variable to avoid null check issues
+    final repository = componentRepository; // Capture repository reference for async callbacks
     
     final protectionDetailsFutures = catalogKeys.map((key) async {
       if (repository == null) return null;
