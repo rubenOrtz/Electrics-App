@@ -64,7 +64,7 @@ class AppButton extends StatelessWidget {
 
   /// Icono opcional a la izquierda del texto.
   ///
-  /// Usar iconos de [Ionicons] para consistencia con el Design System.
+  /// Usar iconos de Ionicons para consistencia con el Design System.
   final IconData? icon;
 
   /// Si `true`, usa estilo secondary (transparente con borde).
@@ -75,7 +75,7 @@ class AppButton extends StatelessWidget {
   /// Color de fondo customizado (opcional).
   ///
   /// Por defecto:
-  /// - Primary: [Theme.primaryColor] (#135BEC)
+  /// - Primary: Theme.primaryColor (#135BEC)
   /// - Secondary: Transparente
   final Color? backgroundColor;
 
@@ -83,7 +83,7 @@ class AppButton extends StatelessWidget {
   ///
   /// Por defecto:
   /// - Primary: Blanco
-  /// - Secondary: [Theme.primaryColor]
+  /// - Secondary: Theme.primaryColor
   final Color? textColor;
 
   const AppButton({

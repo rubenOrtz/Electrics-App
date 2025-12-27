@@ -49,7 +49,7 @@ class ElectricalMath {
   }
 
   /// Calculates Current (Amperes) from Power (Watts)
-  /// I = P / (V * cosφ) [Monofásica]
+  /// I = P / (V * cosφ) Monofásica
   static double calculateCurrent({
     required double powerWatts,
     required double voltage,

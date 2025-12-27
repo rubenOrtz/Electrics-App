@@ -19,17 +19,13 @@ dartdoc:
   # Mostrar categorías sin documentar para identificar gaps
   showUndocumentedCategories: true
 
-  failOnErrors: false
-
   # Enlaces directos al código fuente en GitHub
   linkToSource:
     root: '.'
     uriTemplate: 'https://github.com/rubenOrtz/Electrics-App/blob/main/%f%#L%l%'
 
-  # Configuración de errores y warnings
+  failOnErrors: false
   errors:
     - unresolved-doc-reference
-
   warnings:
-    - ambiguous-doc-reference
-    - tool-error
+    - unresolved-doc-reference

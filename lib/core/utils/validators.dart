@@ -75,7 +75,7 @@ class Validators {
     return null;
   }
 
-  /// Validates number within range [min, max]
+  /// Validates number within range [`min`], [`max`]
   static String? range(String? value, double min, double max) {
     if (value == null || value.isEmpty) {
       return 'Ingresa un valor';
