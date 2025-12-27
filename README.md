@@ -130,4 +130,26 @@ Contamos con un flujo de trabajo moderno:
 
 ---
 
+### 📊 Project Analytics
+
+<div align="center">
+
+![ReproBeats](https://repobeats.axiom.co/api/embed/96e0971aed1869d4bbe69d61e7d3ee6753f80a79.svg "Repobeats analytics image")
+
+</div>
+
+---
+
+## ⭐ Star History
+
+<div align="center">
+
+[![Star History Chart](https://api.star-history.com/svg?repos=rubenOrtz/Electrics-App&type=Date)](https://star-history.com/#rubenOrtz/Electrics-App)
+
+</div>
+
+--
+
 Hecho con ❤️ por ingenieros, para ingenieros.
+
+**© 2025 Ruben Ortiz, Electrics App Team**
